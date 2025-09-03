@@ -318,7 +318,7 @@ animation = &"nogun"
 position = Vector2(25, 10)
 
 [node name="akMarker" type="Marker2D" parent="PlayerSprite"]
-position = Vector2(20, 11)
+position = Vector2(20, 10)
 
 [node name="PointLight2D" type="PointLight2D" parent="PlayerSprite"]
 position = Vector2(0, 1.90735e-06)

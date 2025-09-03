@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=4 uid="uid://dnyh0h7euo111"]
+[gd_scene load_steps=42 format=4 uid="uid://dnyh0h7euo111"]
 
 [ext_resource type="Script" uid="uid://ew0lt3ur3l3b" path="res://Scripts/World.gd" id="1_07780"]
 [ext_resource type="Texture2D" uid="uid://b18fojo0hkp84" path="res://Assets/Tiles/tilesheet_complete.png" id="1_a113d"]
@@ -7,17 +7,17 @@
 [ext_resource type="PackedScene" uid="uid://boc7x50bdow6d" path="res://Scenes/Player.tscn" id="4_dmpbk"]
 [ext_resource type="Texture2D" uid="uid://3rkjovlop7yo" path="res://Assets/perks/Juggernog/Juggernog.png" id="4_r66ge"]
 [ext_resource type="Texture2D" uid="uid://2wboo0vkdxvq" path="res://Assets/perks/QuickRevive/QruickRevive.png" id="5_dmpbk"]
-[ext_resource type="AudioStream" uid="uid://drku15he17yuw" path="res://Assets/BoxMove.mp3" id="5_jnw2c"]
+[ext_resource type="AudioStream" uid="uid://drku15he17yuw" path="res://Assets/Sounds/BoxMove.mp3" id="5_jnw2c"]
 [ext_resource type="AudioStream" uid="uid://bck1oqpdhqhot" path="res://Assets/perks/Juggernog/Juggernog_Jingle_WaW.ogg" id="5_oi5um"]
 [ext_resource type="AudioStream" uid="uid://g6242h148iag" path="res://Assets/perks/Juggernog/Juggernog_Jingle_WaWShort.ogg" id="6_5wxa7"]
 [ext_resource type="AudioStream" uid="uid://dt37456yskp8x" path="res://Assets/perks/QuickRevive/QuickReviveJingle.mp3" id="7_saai4"]
 [ext_resource type="Texture2D" uid="uid://bdmdqnq3tpy6b" path="res://Assets/perks/Speedcola/SpeedCola.png" id="8_nl3m6"]
 [ext_resource type="AudioStream" uid="uid://r2e4o1xtl7x" path="res://Assets/perks/Speedcola/Speed_Cola_Jingle_WaW.ogg" id="9_4ih0k"]
 [ext_resource type="AudioStream" uid="uid://gg6itceataj2" path="res://Assets/perks/QuickRevive/QuickReviveJingleShort.mp3" id="9_dm2qe"]
-[ext_resource type="AudioStream" uid="uid://b0ts87ukltp7r" path="res://Assets/game-over-v2-0.mp3" id="11_4ih0k"]
+[ext_resource type="AudioStream" uid="uid://b0ts87ukltp7r" path="res://Assets/Sounds/game-over-v2-0.mp3" id="11_4ih0k"]
 [ext_resource type="AudioStream" uid="uid://c1hf1c0qfalxv" path="res://Assets/perks/Speedcola/Speed_Cola_Jingle_WaWShort.ogg" id="12_t65c0"]
-[ext_resource type="AudioStream" uid="uid://bwdk4682qhh3t" path="res://Assets/RoundFlip.mp3" id="16_t65c0"]
-[ext_resource type="AudioStream" uid="uid://u4sp30oxhssj" path="res://Assets/GameFlipShort.mp3" id="18_8nowq"]
+[ext_resource type="AudioStream" uid="uid://bwdk4682qhh3t" path="res://Assets/Sounds/RoundFlip.mp3" id="16_t65c0"]
+[ext_resource type="AudioStream" uid="uid://u4sp30oxhssj" path="res://Assets/Sounds/GameFlipShort.mp3" id="18_8nowq"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a113d"]
 texture = ExtResource("1_a113d")
@@ -8188,10 +8188,22 @@ size = Vector2(20, 3645)
 size = Vector2(20, 2798)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_d31q8"]
-size = Vector2(20, 3632)
+size = Vector2(25.0115, 3632)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_dmpbk"]
 size = Vector2(33, 27)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rxbgi"]
+size = Vector2(1792, 1728)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l26ol"]
+size = Vector2(1791, 1008)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sy3ms"]
+size = Vector2(1792, 1729)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_f502e"]
+size = Vector2(1792, 1005)
 
 [node name="World" type="Node2D" groups=["world"]]
 script = ExtResource("1_07780")
@@ -8254,7 +8266,6 @@ attenuation = 0.554785
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TileMapLayer/MysteryBox/Box/StaticBody2D"]
 position = Vector2(-0.430784, 0.567627)
-scale = Vector2(1, 1)
 shape = SubResource("RectangleShape2D_8nowq")
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
@@ -8370,6 +8381,8 @@ attenuation = 0.574349
 position = Vector2(26, 10.5001)
 shape = SubResource("RectangleShape2D_nl3m6")
 
+[node name="Powerups" type="Node2D" parent="."]
+
 [node name="invis" type="StaticBody2D" parent="."]
 position = Vector2(-1370, -432)
 
@@ -8397,7 +8410,7 @@ position = Vector2(2214, 2319)
 rotation = 1.57079
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="invis4"]
-position = Vector2(0.000244141, 1806)
+position = Vector2(-2.50586, 1806)
 shape = SubResource("RectangleShape2D_d31q8")
 
 [node name="Gun" type="Area2D" parent="."]
@@ -8425,6 +8438,95 @@ stream = ExtResource("16_t65c0")
 [node name="RoundFlipShort" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("18_8nowq")
 
+[node name="ZombieSpawnLocations" type="Node2D" parent="."]
+visible = false
+
+[node name="SpawnArea1" type="Area2D" parent="ZombieSpawnLocations"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZombieSpawnLocations/SpawnArea1"]
+position = Vector2(-464, 432)
+shape = SubResource("RectangleShape2D_rxbgi")
+
+[node name="Marker2D" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea1"]
+
+[node name="Marker2D2" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea1"]
+position = Vector2(-1025, 809)
+
+[node name="Marker2D3" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea1"]
+position = Vector2(-60, 861)
+
+[node name="Marker2D4" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea1"]
+position = Vector2(-1014, -143)
+
+[node name="SpawnArea2" type="Area2D" parent="ZombieSpawnLocations"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZombieSpawnLocations/SpawnArea2"]
+position = Vector2(-463.5, 1800)
+shape = SubResource("RectangleShape2D_l26ol")
+
+[node name="Marker2D" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea2"]
+position = Vector2(576, -328)
+
+[node name="Marker2D2" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea2"]
+position = Vector2(950, 422)
+
+[node name="Marker2D3" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea2"]
+position = Vector2(1381, 1141)
+
+[node name="Marker2D4" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea2"]
+position = Vector2(1840, 345)
+
+[node name="Marker2D5" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea2"]
+position = Vector2(696, 1075)
+
+[node name="SpawnArea3" type="Area2D" parent="ZombieSpawnLocations"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(1328, 432.5)
+shape = SubResource("RectangleShape2D_sy3ms")
+
+[node name="Marker2D" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(-1004, 2009)
+
+[node name="Marker2D2" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(-458, 2187)
+
+[node name="Marker2D3" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(242, 1955)
+
+[node name="Marker2D4" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(-301, 1720)
+
+[node name="Marker2D5" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(151, 1419)
+
+[node name="Marker2D6" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea3"]
+position = Vector2(-1028, 1508)
+
+[node name="SpawnArea4" type="Area2D" parent="ZombieSpawnLocations"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(1328, 1799.5)
+shape = SubResource("RectangleShape2D_f502e")
+
+[node name="Marker2D" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(677, 2030)
+
+[node name="Marker2D2" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(525, 1357)
+
+[node name="Marker2D3" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(1088, 1678)
+
+[node name="Marker2D4" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(1212, 2130)
+
+[node name="Marker2D5" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(1896, 2085)
+
+[node name="Marker2D6" type="Marker2D" parent="ZombieSpawnLocations/SpawnArea4"]
+position = Vector2(2169, 1343)
+
 [connection signal="body_entered" from="TileMapLayer/MysteryBox/Box" to="." method="_on_box_body_entered"]
 [connection signal="body_exited" from="TileMapLayer/MysteryBox/Box" to="." method="_on_box_body_exited"]
 [connection signal="body_entered" from="Perks/Juggernog" to="." method="_on_juggernog_entered"]
@@ -8438,3 +8540,7 @@ stream = ExtResource("18_8nowq")
 [connection signal="body_entered" from="Perks/SpeedCola/SCJingle" to="." method="_on_sc_jingle_entered"]
 [connection signal="body_entered" from="Gun" to="." method="_on_gun_body_entered"]
 [connection signal="timeout" from="Spawner" to="." method="_on_spawner_timeout"]
+[connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea1" to="." method="_zombie_spawn_area1"]
+[connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea2" to="." method="_zombie_spawn_area2"]
+[connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea3" to="." method="_zombie_spawn_area3"]
+[connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea4" to="." method="_zombie_spawn_area4"]

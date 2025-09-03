@@ -36,10 +36,13 @@ autostart = true
 [node name="attack" type="Timer" parent="."]
 
 [node name="groanSound" type="AudioStreamPlayer2D" parent="."]
+max_distance = 400.0
 
 [node name="sprintSound" type="AudioStreamPlayer2D" parent="."]
+max_distance = 800.0
 
 [node name="AttackSound" type="AudioStreamPlayer2D" parent="."]
+max_distance = 400.0
 
 [connection signal="timeout" from="AtkCD" to="." method="_on_atk_cd_timeout"]
 [connection signal="timeout" from="groan" to="." method="_on_groan_timeout"]

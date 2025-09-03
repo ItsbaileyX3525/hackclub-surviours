@@ -15,8 +15,29 @@ extends Node2D
 @onready var box_locations: Array = [
 	$TileMapLayer/MysteryBox/SpawnLocation1, $TileMapLayer/MysteryBox/SpawnLocation2, $TileMapLayer/MysteryBox/SpawnLocation3, $TileMapLayer/MysteryBox/SpawnLocation4
 ]
+@onready var powerups: Node2D = $Powerups
 @onready var box_move: AudioStreamPlayer2D = $TileMapLayer/MysteryBox/Box/Move
 @onready var game_over_sound: AudioStreamPlayer = $GameOver
+
+var in_location: String = "grasslands"
+
+@onready var zombie_spawns: Dictionary = {
+	"grasslands" : [
+		$ZombieSpawnLocations/SpawnArea1/Marker2D, $ZombieSpawnLocations/SpawnArea1/Marker2D2, $ZombieSpawnLocations/SpawnArea1/Marker2D3, $ZombieSpawnLocations/SpawnArea1/Marker2D4
+	],
+	"rocklands" : [
+		$ZombieSpawnLocations/SpawnArea2/Marker2D, $ZombieSpawnLocations/SpawnArea2/Marker2D2, $ZombieSpawnLocations/SpawnArea2/Marker2D3, $ZombieSpawnLocations/SpawnArea2/Marker2D4, $ZombieSpawnLocations/SpawnArea2/Marker2D5
+	],
+	"dirtlands" : [
+		$ZombieSpawnLocations/SpawnArea3/Marker2D, $ZombieSpawnLocations/SpawnArea3/Marker2D2, $ZombieSpawnLocations/SpawnArea3/Marker2D3, $ZombieSpawnLocations/SpawnArea3/Marker2D4, $ZombieSpawnLocations/SpawnArea3/Marker2D5, $ZombieSpawnLocations/SpawnArea3/Marker2D6
+	],
+	"poshlands" : [
+		$ZombieSpawnLocations/SpawnArea4/Marker2D, $ZombieSpawnLocations/SpawnArea4/Marker2D2, $ZombieSpawnLocations/SpawnArea4/Marker2D3, $ZombieSpawnLocations/SpawnArea4/Marker2D4, $ZombieSpawnLocations/SpawnArea4/Marker2D5, $ZombieSpawnLocations/SpawnArea4/Marker2D6
+	]
+}
+
+const MAX_BLAMMO = preload("res://Assets/Sounds/powerups/MaxBlammo.mp3")
+const MAX_AMMO_MODEL = preload("res://Assets/Sounds/powerups/maxAmmo.png")
 
 var zombie_scene: PackedScene = preload("res://Scenes/Zombie.tscn")
 var zombie_index: int = 0
@@ -56,19 +77,65 @@ func load_box_location() -> void:
 	current_box_iteration = 0
 	can_prompt_box = true
 	box_spins_till_move = randi_range(4,9)
+
+func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> void:
+	if body.name != "Player":
+		return
+	match powerup:
+		"maxblammo":
+			player.max_ammo()
+			var max_ammo: AudioStreamPlayer = AudioStreamPlayer.new()
+			max_ammo.stream = MAX_BLAMMO
+			call_deferred("add_child", max_ammo)
+			max_ammo.play()
+			powerup_node.call_deferred("queue_free")
+			await get_tree().create_timer(2.95).timeout
+			max_ammo.call_deferred("queue_free")
+
+func spawn_powerup(positioning: Vector2) -> void:
+	var powerup_rng = randi_range(0,3)
+	match powerup_rng:
+		0:
+			var max_blammo_sprite: Sprite2D = Sprite2D.new()
+			max_blammo_sprite.texture = MAX_AMMO_MODEL
+			max_blammo_sprite.scale = Vector2(0.546,0.546)
+			max_blammo_sprite.position = positioning
+			var max_blammo_area: Area2D = Area2D.new()
+			max_blammo_area.connect("body_entered", Callable(collect_powerup).bind("maxblammo", max_blammo_sprite))
+			var max_blammo_area_collision: CollisionShape2D = CollisionShape2D.new()
+			var rectangle: RectangleShape2D = RectangleShape2D.new()
+			rectangle.size = Vector2(58.595,53.102)
+			max_blammo_area_collision.shape = rectangle
+			max_blammo_area.call_deferred("add_child", max_blammo_area_collision)
+			max_blammo_sprite.call_deferred("add_child", max_blammo_area)
+			powerups.call_deferred("add_child", max_blammo_sprite)
+			pass#Max blammo
+		1:
+			pass#Insta kill
+		2:
+			pass#Double points
+		3:
+			pass#Kaboom
 	
-func zombie_death(zombie_type: String) -> void:
+	
+func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 	player.increment_kills()
 	match zombie_type:
 		"basic":
 			player.points += 100
+
+	var powerup_rng = randi_range(1,12)
+	if powerup_rng == 12:
+		spawn_powerup(zm_position)
 
 	zombies_alive -= 1
 	player.update_zombie_counter(zombies_alive)
 
 	# Last zombies get faster
 	if zombies_alive <= 3 and wave >= 4:
-		for e in zombies.get_children():
+		var children = zombies.get_children()
+		children[0].sprint()
+		for e in children:
 			e.last_zombies()
 
 	# Wave over
@@ -111,16 +178,20 @@ func _on_spawner_timeout() -> void:
 	if zombies_alive >= max_zombies_alive:
 		spawner.start()
 		return
-
+	
+	spawn_powerup(Vector2(-50,-100))
 	zombies_to_spawn -= 1
 	zombies_alive += 1
+
+	var spawns: int = len(zombie_spawns[in_location]) - 1
+	var spawn_index: int = randi_range(0, spawns)
 
 	var zombie = zombie_scene.instantiate()
 	zombie.health_modifier = zombie_health_modifier
 	zombie.name = "Zombie" + str(zombie_index)
 	zombie_index += 1
-
 	zombies.call_deferred("add_child", zombie)
+	zombie.position = zombie_spawns[in_location][spawn_index].position
 	zombie.connect("death", zombie_death)
 
 	if zombies_alive <= 3 and wave >= 4:
@@ -204,3 +275,15 @@ func _on_box_body_entered(body: Node2D) -> void:
 
 func _on_box_body_exited(body: Node2D) -> void:
 	if body.name == "Player": body.remove_prompt()
+
+func _zombie_spawn_area1(body: Node2D) -> void:
+	if body.name == "Player": in_location = "grasslands"
+
+func _zombie_spawn_area2(body: Node2D) -> void:
+	if body.name == "Player": in_location = "dirtlands"
+
+func _zombie_spawn_area3(body: Node2D) -> void:
+	if body.name == "Player": in_location = "rocklands"
+
+func _zombie_spawn_area4(body: Node2D) -> void:
+	if body.name == "Player": in_location = "poshlands"

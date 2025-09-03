@@ -61,7 +61,7 @@ var is_dead: bool = false
 var stop_tracking: bool = false
 
 func sprint() -> void:
-	sprint_sound.stream = sprint_sounds[randi_range(0,9)]
+	sprint_sound.stream = sprint_sounds[randi_range(0,8)]
 	sprint_sound.play()
 
 func last_zombies() -> void:
@@ -87,6 +87,9 @@ func _physics_process(_delta: float) -> void:
 	agent.target_position = player.global_position
 	var distance = (player.global_position - global_position).length()
 
+	if stop_tracking:
+		return
+
 	if distance <= 45:
 		if can_atk:
 			can_atk = false
@@ -95,8 +98,6 @@ func _physics_process(_delta: float) -> void:
 			attack_sound.play()
 			player.take_hit(1)
 	else:
-		if stop_tracking:
-			return
 		var next_point = agent.get_next_path_position()
 		var direction = (next_point - global_transform.origin).normalized()
 		zombie_sprite.rotation = direction.angle()
@@ -111,7 +112,7 @@ func take_damage(dam: float) -> void:
 	hitpoints -= dam
 	if hitpoints <= 0:
 		is_dead = true
-		emit_signal("death", "basic")
+		emit_signal("death", "basic", global_position)
 		call_deferred("queue_free")
 
 func _on_groan_timeout() -> void:
