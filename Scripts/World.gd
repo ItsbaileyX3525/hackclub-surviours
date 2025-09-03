@@ -86,19 +86,19 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			player.max_ammo()
 			var max_ammo: AudioStreamPlayer = AudioStreamPlayer.new()
 			max_ammo.stream = MAX_BLAMMO
-			call_deferred("add_child", max_ammo)
+			add_child(max_ammo)
 			max_ammo.play()
 			powerup_node.call_deferred("queue_free")
 			await get_tree().create_timer(2.95).timeout
 			max_ammo.call_deferred("queue_free")
 
-func spawn_powerup(positioning: Vector2) -> void:
+func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 	var powerup_rng = randi_range(0,3)
 	match powerup_rng:
 		0:
 			var max_blammo_sprite: Sprite2D = Sprite2D.new()
 			max_blammo_sprite.texture = MAX_AMMO_MODEL
-			max_blammo_sprite.scale = Vector2(0.546,0.546)
+			max_blammo_sprite.scale = Vector2(0.7,0.7)
 			max_blammo_sprite.position = positioning
 			var max_blammo_area: Area2D = Area2D.new()
 			max_blammo_area.connect("body_entered", Callable(collect_powerup).bind("maxblammo", max_blammo_sprite))
@@ -109,15 +109,28 @@ func spawn_powerup(positioning: Vector2) -> void:
 			max_blammo_area.call_deferred("add_child", max_blammo_area_collision)
 			max_blammo_sprite.call_deferred("add_child", max_blammo_area)
 			powerups.call_deferred("add_child", max_blammo_sprite)
-			pass#Max blammo
 		1:
 			pass#Insta kill
 		2:
 			pass#Double points
 		3:
 			pass#Kaboom
-	
-	
+
+	if specific == "max":
+		var max_blammo_sprite: Sprite2D = Sprite2D.new()
+		max_blammo_sprite.texture = MAX_AMMO_MODEL
+		max_blammo_sprite.scale = Vector2(0.7,0.7)
+		max_blammo_sprite.position = positioning
+		var max_blammo_area: Area2D = Area2D.new()
+		max_blammo_area.connect("body_entered", Callable(collect_powerup).bind("maxblammo", max_blammo_sprite))
+		var max_blammo_area_collision: CollisionShape2D = CollisionShape2D.new()
+		var rectangle: RectangleShape2D = RectangleShape2D.new()
+		rectangle.size = Vector2(58.595,53.102)
+		max_blammo_area_collision.shape = rectangle
+		max_blammo_area.call_deferred("add_child", max_blammo_area_collision)
+		max_blammo_sprite.call_deferred("add_child", max_blammo_area)
+		powerups.call_deferred("add_child", max_blammo_sprite)
+
 func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 	player.increment_kills()
 	match zombie_type:
@@ -179,7 +192,6 @@ func _on_spawner_timeout() -> void:
 		spawner.start()
 		return
 	
-	spawn_powerup(Vector2(-50,-100))
 	zombies_to_spawn -= 1
 	zombies_alive += 1
 
@@ -227,8 +239,6 @@ func buy_box() -> void:
 		await get_tree().create_timer(1.5).timeout
 		box.visible = true 
 		load_box_location()
-		
-	
 
 func _on_gun_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
@@ -236,6 +246,7 @@ func _on_gun_body_entered(body: Node2D) -> void:
 		gun.call_deferred("queue_free")
 		round_flip_short.play()
 		new_round()
+		#spawn_powerup(Vector2(0,0), "max")
 
 func _on_juggernog_entered(body: Node2D) -> void:
 	if body.name == "Player": body.prompt_perk("Juggernog")

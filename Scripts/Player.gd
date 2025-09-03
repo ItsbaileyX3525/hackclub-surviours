@@ -124,11 +124,13 @@ class weapon_class extends Node2D:
 	var _reload_sound_path: String = ""
 	var _shot_sound_path: String = ""
 	var reload_sound: AudioStreamPlayer2D
+	var reloading: bool = false
 	
 	func _ready() -> void:
 		world = get_tree().get_first_node_in_group("world")
 		global_scope = get_tree().get_first_node_in_group("player")
 		add_child(reload_timer)
+		reload_timer.one_shot = true
 		reload_timer.connect("timeout", Callable(self.finish_reload))
 	
 	func _init(max_bull: int, bullet_mag_size: int, bul_dam: float, bul_cd: float, reload_cd: float, bullet_volume: float, anim_name: String, reload_anim_name: String, player: AnimatedSprite2D, marker: Marker2D, shot_sound_path: String = "", reload_sound_path: String = "", is_shotgun: bool = false) -> void:
@@ -171,18 +173,19 @@ class weapon_class extends Node2D:
 
 	func stop_reload(return_anim: bool = false, allow_shoot: bool = true) -> void:
 		reload_timer.stop()
-		reload_sound.stop()
-		if return_anim:
+		if reload_sound != null:
+			reload_sound.stop()
+		if return_anim and currently_equipped:
 			player_sprite.animation = weapon_equipped_anim_name
 		if allow_shoot:
 			can_shoot = true
 			can_reload = true
 
 	func reload() -> void:
-		if current_mag >= max_bullet_mag: #mag already full
+		if current_mag >= max_bullet_mag or not currently_equipped:
 			return
-
 		if bullets_left > 0 and can_reload:
+			reloading = true
 			player_sprite.animation = weapon_equipped_reload_anim_name
 			can_shoot = false
 			can_reload = false
@@ -192,6 +195,8 @@ class weapon_class extends Node2D:
 			reload_timer.start()
 			
 	func finish_reload() -> void:
+		if current_mag >= max_bullet_mag or not currently_equipped:
+			return
 		if bullets_left >= max_bullet_mag - current_mag:
 			bullets_left -= max_bullet_mag - current_mag
 			current_mag = max_bullet_mag
@@ -200,6 +205,7 @@ class weapon_class extends Node2D:
 			bullets_left -= bullets_left
 		can_shoot = true
 		can_reload = true
+		reloading = false
 		player_sprite.animation = weapon_equipped_anim_name
 
 	func create_shot(path: String) -> void:
@@ -231,7 +237,8 @@ class weapon_class extends Node2D:
 				bullet.damage = bullet_damage
 				world.add_child(bullet)
 			await get_tree().create_timer(shot_cd).timeout
-			can_shoot = true
+			if not reloading:
+				can_shoot = true
 		else:
 			pass#Idk play some sound effect or summin
 
@@ -467,9 +474,22 @@ func _physics_process(_delta: float) -> void:
 	if Input.is_action_just_pressed("cheat"):
 		add_weapon_to_inventory("ak47")
 
+	if Input.is_action_just_pressed("cheat2"):
+		remove_weapon()
+
 func take_hit(damange: int) -> void:
 	health -= damange
 	regenerate_timer.start()
+
+func remove_weapon() -> void:
+	var weapon_to_remove: int = weapon_inventory_index
+	switch_weapon()
+	if len(weapon_inventory) > 1:
+		weapon_inventory.remove_at(weapon_to_remove)
+	else:
+		weapons[weapon_equipped].unequip()
+		weapon_inventory.clear()
+		weapon_equipped = ""
 
 func switch_weapon(forward: bool = true) -> void:
 	if len(weapon_inventory) >= 2:
@@ -487,16 +507,15 @@ func switch_weapon(forward: bool = true) -> void:
 		weapons[weapon_equipped].equip()
 
 func add_weapon_to_inventory(weapon: String) -> void:
-	print("Added gun to inventory")
-	if len(weapon_inventory) >= max_weapon_inventory:
-		#Perhaps a failure sound
-		print("Already have 2 guns")
-		return
+	for e in weapon_inventory:
+		if e == weapon:
+			return
+	if len(weapon_inventory) > 1:
+		weapon_inventory.remove_at(weapon_inventory_index)
 	weapon_equipped = weapon
 	weapon_inventory.append(weapon)
 	weapon_inventory_index = len(weapon_inventory) - 1
 	weapons[weapon_equipped].equip()
-	print("Weapon index, should be 0 for first gun: ", weapon_inventory_index)
 
 func _on_regenerate_timer_timeout() -> void:
 	if health >= max_health:
