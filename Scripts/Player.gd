@@ -269,7 +269,10 @@ func drink_quickrevive(price: int) -> void: # Bo2 perk icon, bo5 functionality :
 	can_switch_weapon = true
 	can_action = true
 	regenerate_timer.wait_time /= 2
-	player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	if weapon_equipped:
+		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	else:
+		player_sprite.animation = "nogun"
 	var perkIcon = TextureRect.new()
 	perkIcon.texture = perk_icons["QuickRevive"]
 	perkIcon.name = "QuickRevive"
@@ -296,7 +299,10 @@ func drink_speedcola(price: int) -> void:
 	await get_tree().create_timer(3).timeout
 	can_action = true
 	can_switch_weapon = true
-	player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	if weapon_equipped:
+		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	else:
+		player_sprite.animation = "nogun"
 	reload_speed = 0.2
 	var perkIcon = TextureRect.new()
 	perkIcon.texture = perk_icons["SpeedCola"]
@@ -326,7 +332,10 @@ func drink_juggernog(price: int) -> void:
 	can_action = true
 	can_switch_weapon = true
 	weapons[weapon_equipped].can_shoot = true
-	player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	if weapon_equipped:
+		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	else:
+		player_sprite.animation = "nogun"
 	max_health = 6
 	heart_3.visible = true
 	regenerate_timer.start()
@@ -426,6 +435,8 @@ func _physics_process(_delta: float) -> void:
 	score.text = str(points)
 	if weapon_equipped:
 		bullets_left.text = "%s / %s" % [weapons[weapon_equipped].current_mag, weapons[weapon_equipped].bullets_left]
+	else:
+		bullets_left.text = "0 / 0"
 	
 	var input_vector := Vector2.ZERO
 
@@ -472,6 +483,7 @@ func _physics_process(_delta: float) -> void:
 		switch_weapon(false)
 		
 	if Input.is_action_just_pressed("cheat"):
+		points += 1000
 		add_weapon_to_inventory("ak47")
 
 	if Input.is_action_just_pressed("cheat2"):
@@ -482,6 +494,8 @@ func take_hit(damange: int) -> void:
 	regenerate_timer.start()
 
 func remove_weapon() -> void:
+	if not weapon_equipped:
+		return
 	var weapon_to_remove: int = weapon_inventory_index
 	switch_weapon()
 	if len(weapon_inventory) > 1:
@@ -532,7 +546,8 @@ func max_ammo() -> void:
 		weapons[e].fill_ammo()
 
 func stop_current_action() -> void:
-	weapons[weapon_equipped].stop_reload()
+	if weapon_equipped:
+		weapons[weapon_equipped].stop_reload()
 
 func update_zombie_counter(zombies: int) -> void:
 	zombies_left.text = "Zombies left: %s" % str(zombies)

@@ -18,6 +18,7 @@ extends Node2D
 @onready var powerups: Node2D = $Powerups
 @onready var box_move: AudioStreamPlayer2D = $TileMapLayer/MysteryBox/Box/Move
 @onready var game_over_sound: AudioStreamPlayer = $GameOver
+@onready var fog: Sprite2D = $Fogs/Fog
 
 var in_location: String = "grasslands"
 
@@ -58,6 +59,13 @@ var can_prompt_box: bool = true
 
 func _ready() -> void:
 	load_box_location()
+
+func _physics_process(delta: float) -> void:
+	var noise_tex := fog.texture as NoiseTexture2D
+	if noise_tex and noise_tex.noise:
+		var noise := noise_tex.noise as FastNoiseLite
+		
+		noise.offset += Vector3(.1,.1,0)
 
 func load_box_location() -> void:
 	var new_location = randi_range(0,3)
