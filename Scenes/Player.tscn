@@ -1,0 +1,341 @@
+[gd_scene load_steps=18 format=3 uid="uid://boc7x50bdow6d"]
+
+[ext_resource type="Script" uid="uid://b80lwq8sw2jhi" path="res://Scripts/Player.gd" id="1_kyqiw"]
+[ext_resource type="Texture2D" uid="uid://diin0v31jpb4u" path="res://Assets/Charcter/survivor1_stand.png" id="1_rpqav"]
+[ext_resource type="Texture2D" uid="uid://bpbhlwqycasxc" path="res://Assets/Charcter/Hearts/heartFull.png" id="2_gntrk"]
+[ext_resource type="Texture2D" uid="uid://2mxdnauwd78y" path="res://Assets/RoundNumbers/0.png" id="3_52ee3"]
+[ext_resource type="Texture2D" uid="uid://dlfmxlwd0ad2j" path="res://Assets/Charcter/survivor1_gun.png" id="3_nn08x"]
+[ext_resource type="Texture2D" uid="uid://dhlnlw7r53inw" path="res://Assets/Blood.png" id="4_bhhdu"]
+[ext_resource type="Texture2D" uid="uid://bpew6d0jdis87" path="res://Assets/Charcter/survivor1_hold.png" id="5_bhhdu"]
+[ext_resource type="Texture2D" uid="uid://dl7qcryotlolg" path="res://Assets/Charcter/ak/ak.png" id="5_miouo"]
+[ext_resource type="Texture2D" uid="uid://c3i6t2erx21sf" path="res://Assets/Charcter/survivor1_reload.png" id="6_bhhdu"]
+[ext_resource type="Texture2D" uid="uid://bhn2a2gtbxvgp" path="res://Assets/Charcter/ak/akReload.png" id="6_o3h8g"]
+[ext_resource type="Texture2D" uid="uid://dplb3w4c2bilk" path="res://Assets/Charcter/shotgun/olympia.png" id="7_ksbbd"]
+[ext_resource type="Texture2D" uid="uid://vsj3wvojtrgu" path="res://Assets/Charcter/shotgun/olympiaReload.png" id="8_glx4g"]
+[ext_resource type="AudioStream" uid="uid://1opm2312m42d" path="res://Assets/perks/drink.mp3" id="9_megsn"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_kyqiw"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_miouo")
+}],
+"loop": true,
+"name": &"ak",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_o3h8g")
+}],
+"loop": true,
+"name": &"ak_reload",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_bhhdu")
+}],
+"loop": true,
+"name": &"drink",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_rpqav")
+}],
+"loop": true,
+"name": &"nogun",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("7_ksbbd")
+}],
+"loop": true,
+"name": &"olympia",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_glx4g")
+}],
+"loop": true,
+"name": &"olympia_reload",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_nn08x")
+}],
+"loop": true,
+"name": &"pistol",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_bhhdu")
+}],
+"loop": true,
+"name": &"pistol_reload",
+"speed": 5.0
+}]
+
+[sub_resource type="Gradient" id="Gradient_bhhdu"]
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_megsn"]
+gradient = SubResource("Gradient_bhhdu")
+width = 356
+height = 356
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.164835, 0.840659)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kyqiw"]
+size = Vector2(34, 44)
+
+[node name="Player" type="CharacterBody2D" groups=["player"]]
+script = ExtResource("1_kyqiw")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Camera2D"]
+
+[node name="Control" type="Control" parent="Camera2D/CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+
+[node name="Hearts" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(1.30281, 1.30281)
+theme_override_constants/separation = -5
+
+[node name="Heart" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Hearts"]
+layout_mode = 2
+texture = ExtResource("2_gntrk")
+expand_mode = 2
+
+[node name="Heart2" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Hearts"]
+layout_mode = 2
+texture = ExtResource("2_gntrk")
+expand_mode = 2
+
+[node name="Heart3" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Hearts"]
+visible = false
+layout_mode = 2
+texture = ExtResource("2_gntrk")
+expand_mode = 2
+
+[node name="Round" type="CenterContainer" parent="Camera2D/CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_right = 40.0
+grow_vertical = 0
+scale = Vector2(0.670976, 0.670976)
+
+[node name="MarginContainer" type="MarginContainer" parent="Camera2D/CanvasLayer/Control/Round"]
+layout_mode = 2
+theme_override_constants/margin_right = -80
+theme_override_constants/margin_bottom = -20
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control/Round/MarginContainer"]
+layout_mode = 2
+
+[node name="RoundContainer" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control/Round/MarginContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Round/MarginContainer/HBoxContainer/RoundContainer"]
+layout_mode = 2
+texture = ExtResource("3_52ee3")
+
+[node name="Perks" type="MarginContainer" parent="Camera2D/CanvasLayer/Control/Round/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 65
+theme_override_constants/margin_right = -3920
+
+[node name="PerkContainer" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control/Round/MarginContainer/HBoxContainer/Perks"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Bullets" type="CenterContainer" parent="Camera2D/CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Camera2D/CanvasLayer/Control/Bullets"]
+layout_mode = 2
+theme_override_constants/margin_right = 25
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Camera2D/CanvasLayer/Control/Bullets/MarginContainer"]
+layout_mode = 2
+
+[node name="Bullets" type="Label" parent="Camera2D/CanvasLayer/Control/Bullets/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 46
+text = "0/0"
+horizontal_alignment = 1
+
+[node name="ZombieCounter" type="CenterContainer" parent="Camera2D/CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Camera2D/CanvasLayer/Control/ZombieCounter"]
+layout_mode = 2
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 25
+
+[node name="ZombiesLeft" type="Label" parent="Camera2D/CanvasLayer/Control/ZombieCounter/MarginContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Zombies left: 0"
+horizontal_alignment = 1
+
+[node name="PurchaseText" type="CenterContainer" parent="Camera2D/CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Camera2D/CanvasLayer/Control/PurchaseText"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 90
+
+[node name="Purchase" type="RichTextLabel" parent="Camera2D/CanvasLayer/Control/PurchaseText/MarginContainer"]
+custom_minimum_size = Vector2(500, 70)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+horizontal_alignment = 1
+
+[node name="Points" type="Control" parent="Camera2D/CanvasLayer/Control"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TextureRect" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Points"]
+layout_mode = 0
+offset_left = 1155.0
+offset_top = 597.0
+offset_right = 1810.0
+offset_bottom = 1004.0
+scale = Vector2(0.198787, 0.198787)
+texture = ExtResource("4_bhhdu")
+
+[node name="Score" type="Label" parent="Camera2D/CanvasLayer/Control/Points"]
+self_modulate = Color(1, 1, 0, 1)
+layout_mode = 2
+offset_left = 1137.0
+offset_top = 614.0
+offset_right = 1256.0
+offset_bottom = 651.0
+theme_override_font_sizes/font_size = 26
+text = "500"
+horizontal_alignment = 2
+
+[node name="Perks" type="Control" parent="Camera2D/CanvasLayer/Control"]
+anchors_preset = 0
+offset_left = 94.0
+offset_top = 660.0
+offset_right = 134.0
+offset_bottom = 700.0
+
+[node name="GameOver" type="Control" parent="Camera2D/CanvasLayer/Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Camera2D/CanvasLayer/Control/GameOver"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -221.0
+offset_top = -255.0
+offset_right = 377.0
+offset_bottom = -113.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.659438, 0.659438)
+theme_override_font_sizes/font_size = 101
+text = "GAME OVER"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control/GameOver"]
+layout_mode = 2
+offset_left = 620.0
+offset_top = 340.0
+offset_right = 621.0
+offset_bottom = 363.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Camera2D/CanvasLayer/Control/GameOver/HBoxContainer"]
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "USERNAME | SCORE | KILLS
+YOU | 1 | 1"
+horizontal_alignment = 1
+
+[node name="PlayerSprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_kyqiw")
+animation = &"nogun"
+
+[node name="Marker2D" type="Marker2D" parent="PlayerSprite"]
+position = Vector2(25, 10)
+
+[node name="akMarker" type="Marker2D" parent="PlayerSprite"]
+position = Vector2(20, 11)
+
+[node name="PointLight2D" type="PointLight2D" parent="PlayerSprite"]
+position = Vector2(0, 1.90735e-06)
+color = Color(0.93664, 0.446557, 0.332133, 1)
+energy = 0.75
+texture = SubResource("GradientTexture2D_megsn")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
+position = Vector2(-1, 1)
+shape = SubResource("RectangleShape2D_kyqiw")
+
+[node name="RegenerateTimer" type="Timer" parent="."]
+wait_time = 2.5
+one_shot = true
+
+[node name="DrinkPerk" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("9_megsn")
+
+[connection signal="timeout" from="RegenerateTimer" to="." method="_on_regenerate_timer_timeout"]

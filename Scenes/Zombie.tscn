@@ -1,0 +1,45 @@
+[gd_scene load_steps=4 format=3 uid="uid://blkkaah6c3stn"]
+
+[ext_resource type="Texture2D" uid="uid://h07t4j76slgm" path="res://Assets/Enemies/ZombieOrange/Zombie.png" id="1_4ru28"]
+[ext_resource type="Script" uid="uid://5u0byehgj68f" path="res://Scripts/Zombie.gd" id="1_h15oy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yf4vm"]
+size = Vector2(32, 42)
+
+[node name="Zombie" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 4
+script = ExtResource("1_h15oy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
+shape = SubResource("RectangleShape2D_yf4vm")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+avoidance_enabled = true
+radius = 35.0
+
+[node name="AtkCD" type="Timer" parent="."]
+wait_time = 1.2
+one_shot = true
+
+[node name="ZombieSprite" type="Sprite2D" parent="."]
+texture = ExtResource("1_4ru28")
+
+[node name="groan" type="Timer" parent="."]
+wait_time = 4.0
+one_shot = true
+autostart = true
+
+[node name="sprint" type="Timer" parent="."]
+
+[node name="attack" type="Timer" parent="."]
+
+[node name="groanSound" type="AudioStreamPlayer2D" parent="."]
+
+[node name="sprintSound" type="AudioStreamPlayer2D" parent="."]
+
+[node name="AttackSound" type="AudioStreamPlayer2D" parent="."]
+
+[connection signal="timeout" from="AtkCD" to="." method="_on_atk_cd_timeout"]
+[connection signal="timeout" from="groan" to="." method="_on_groan_timeout"]
