@@ -18,7 +18,9 @@ extends Node2D
 @onready var powerups: Node2D = $Powerups
 @onready var box_move: AudioStreamPlayer2D = $TileMapLayer/MysteryBox/Box/Move
 @onready var game_over_sound: AudioStreamPlayer = $GameOver
-@onready var fog: Sprite2D = $Fogs/Fog
+@onready var fogs: Node2D = $Fogs
+@onready var instakill_timer: Timer = $Instakill
+@onready var double_points_timer: Timer = $DoublePoints
 
 var in_location: String = "grasslands"
 
@@ -39,7 +41,12 @@ var in_location: String = "grasslands"
 
 const MAX_BLAMMO = preload("res://Assets/Sounds/powerups/MaxBlammo.mp3")
 const MAX_AMMO_MODEL = preload("res://Assets/Sounds/powerups/maxAmmo.png")
-
+const INSTAKILL = preload("res://Assets/Sounds/powerups/Instakill.mp3")
+const INSTAKILL_MODEL = preload("res://Assets/Sounds/powerups/Instakill.png")
+const DOUBLE_POINTS = preload("res://Assets/Sounds/powerups/DoubePoints.mp3")
+const DOUBLE_POINTS_MODEL = preload("res://Assets/Sounds/powerups/DoublePoints.png")
+const KABOOM = preload("res://Assets/Sounds/powerups/kaboom.mp3")
+const KABOOM_MODEL = preload("res://Assets/Sounds/powerups/Kaboom.png")
 var zombie_scene: PackedScene = preload("res://Scenes/Zombie.tscn")
 var zombie_index: int = 0
 
@@ -57,15 +64,19 @@ var box_spins_till_move: int
 var current_box_iteration: int
 var can_prompt_box: bool = true
 
+var instakill_active: bool = false
+var double_points_active: bool = false
+
 func _ready() -> void:
 	load_box_location()
 
-func _physics_process(delta: float) -> void:
-	var noise_tex := fog.texture as NoiseTexture2D
-	if noise_tex and noise_tex.noise:
-		var noise := noise_tex.noise as FastNoiseLite
-		
-		noise.offset += Vector3(.1,.1,0)
+func _physics_process(_delta: float) -> void:
+	for e in fogs:
+		var noise_tex := e.texture as NoiseTexture2D
+		if noise_tex and noise_tex.noise:
+			var noise := noise_tex.noise as FastNoiseLite
+			
+			noise.offset += Vector3(.1,.1,0)
 
 func load_box_location() -> void:
 	var new_location = randi_range(0,3)
@@ -99,6 +110,40 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			powerup_node.call_deferred("queue_free")
 			await get_tree().create_timer(2.95).timeout
 			max_ammo.call_deferred("queue_free")
+		"instakill":
+			for e in zombies.get_children():
+				e.activate_instakill()
+			instakill_active = true
+			var instakill: AudioStreamPlayer = AudioStreamPlayer.new()
+			instakill.stream = INSTAKILL
+			add_child(instakill)
+			instakill.play()
+			powerup_node.call_deferred("queue_free")
+			instakill_timer.start()
+			await get_tree().create_timer(2.74).timeout
+			instakill.call_deferred("queue_free")
+		"doublepoints":
+			double_points_active = true
+			var double_points: AudioStreamPlayer = AudioStreamPlayer.new()
+			double_points.stream = DOUBLE_POINTS
+			add_child(double_points)
+			double_points.play()
+			powerup_node.call_deferred("queue_free")
+			double_points_timer.start()
+			await get_tree().create_timer(2.17).timeout
+			double_points.call_deferred("queue_free")
+		"kaboom":
+			var kaboom: AudioStreamPlayer = AudioStreamPlayer.new()
+			kaboom.stream = KABOOM
+			add_child(kaboom)
+			kaboom.play()
+			powerup_node.call_deferred("queue_free")
+			await get_tree().create_timer(2.71).timeout
+			kaboom.call_deferred("queue_free")
+			for e in zombies.get_children():
+				e.take_damage(9999999999999.0)
+			await get_tree().create_timer(3).timeout
+			player.points += 400
 
 func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 	var powerup_rng = randi_range(0,3)
@@ -118,11 +163,47 @@ func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 			max_blammo_sprite.call_deferred("add_child", max_blammo_area)
 			powerups.call_deferred("add_child", max_blammo_sprite)
 		1:
-			pass#Insta kill
+			var instakill_sprite: Sprite2D = Sprite2D.new()
+			instakill_sprite.texture = DOUBLE_POINTS_MODEL
+			instakill_sprite.scale = Vector2(0.06,0.06)
+			instakill_sprite.position = positioning
+			var instakill_area: Area2D = Area2D.new()
+			instakill_area.connect("body_entered", Callable(collect_powerup).bind("instakill", instakill_sprite))
+			var instakill_area_collision: CollisionShape2D = CollisionShape2D.new()
+			var rectangle: RectangleShape2D = RectangleShape2D.new()
+			rectangle.size = Vector2(58.595,53.102)
+			instakill_area_collision.shape = rectangle
+			instakill_area.call_deferred("add_child", instakill_area_collision)
+			instakill_sprite.call_deferred("add_child", instakill_area)
+			powerups.call_deferred("add_child", instakill_sprite)
 		2:
-			pass#Double points
+			var double_points_sprite: Sprite2D = Sprite2D.new()
+			double_points_sprite.texture = DOUBLE_POINTS_MODEL
+			double_points_sprite.scale = Vector2(0.06,0.06)
+			double_points_sprite.position = positioning
+			var double_points_area: Area2D = Area2D.new()
+			double_points_area.connect("body_entered", Callable(collect_powerup).bind("doublepoints", double_points_sprite))
+			var double_points_area_collision: CollisionShape2D = CollisionShape2D.new()
+			var rectangle: RectangleShape2D = RectangleShape2D.new()
+			rectangle.size = Vector2(58.595,53.102)
+			double_points_area_collision.shape = rectangle
+			double_points_area.call_deferred("add_child", double_points_area_collision)
+			double_points_sprite.call_deferred("add_child", double_points_area)
+			powerups.call_deferred("add_child", double_points_sprite)
 		3:
-			pass#Kaboom
+			var kaboom_sprite: Sprite2D = Sprite2D.new()
+			kaboom_sprite.texture = DOUBLE_POINTS_MODEL
+			kaboom_sprite.scale = Vector2(0.078,0.078)
+			kaboom_sprite.position = positioning
+			var kaboom_area: Area2D = Area2D.new()
+			kaboom_area.connect("body_entered", Callable(collect_powerup).bind("kaboom", kaboom_sprite))
+			var kaboom_area_collision: CollisionShape2D = CollisionShape2D.new()
+			var rectangle: RectangleShape2D = RectangleShape2D.new()
+			rectangle.size = Vector2(58.595,53.102)
+			kaboom_area_collision.shape = rectangle
+			kaboom_area.call_deferred("add_child", kaboom_area_collision)
+			kaboom_sprite.call_deferred("add_child", kaboom_area)
+			powerups.call_deferred("add_child", kaboom_sprite)
 
 	if specific == "max":
 		var max_blammo_sprite: Sprite2D = Sprite2D.new()
@@ -141,9 +222,12 @@ func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 
 func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 	player.increment_kills()
+	var multi = 1
+	if double_points_active:
+		multi = 2
 	match zombie_type:
 		"basic":
-			player.points += 100
+			player.points += 100 * multi
 
 	var powerup_rng = randi_range(1,12)
 	if powerup_rng == 12:
@@ -306,3 +390,11 @@ func _zombie_spawn_area3(body: Node2D) -> void:
 
 func _zombie_spawn_area4(body: Node2D) -> void:
 	if body.name == "Player": in_location = "poshlands"
+
+func _on_instakill_timeout() -> void:
+	instakill_active = false
+	for e in zombies.get_children():
+		e.deactivate_instakill()
+
+func _on_double_points_timeout() -> void:
+	double_points_active = false

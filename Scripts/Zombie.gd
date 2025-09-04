@@ -59,6 +59,7 @@ var last_zombie: bool = false
 var is_ready: bool = false
 var is_dead: bool = false
 var stop_tracking: bool = false
+var max_health: float
 
 func sprint() -> void:
 	sprint_sound.stream = sprint_sounds[randi_range(0,8)]
@@ -106,6 +107,13 @@ func _physics_process(_delta: float) -> void:
 
 func _on_atk_cd_timeout() -> void:
 	can_atk = true
+
+func activate_instakill() -> void:
+	max_health = hitpoints
+	hitpoints = 0.001
+
+func deactivate_instakill() -> void:
+	hitpoints = max_health
 
 func take_damage(dam: float) -> void:
 	if is_dead: return

@@ -7669,6 +7669,14 @@ rotation = 1.57079
 scale = Vector2(2.73379, 2.5943)
 texture = SubResource("NoiseTexture2D_rxbgi")
 
+[node name="Instakill" type="Timer" parent="."]
+wait_time = 25.0
+one_shot = true
+
+[node name="DoublePoints" type="Timer" parent="."]
+wait_time = 25.0
+one_shot = true
+
 [connection signal="body_entered" from="TileMapLayer/MysteryBox/Box" to="." method="_on_box_body_entered"]
 [connection signal="body_exited" from="TileMapLayer/MysteryBox/Box" to="." method="_on_box_body_exited"]
 [connection signal="body_entered" from="Perks/Juggernog" to="." method="_on_juggernog_entered"]
@@ -7686,3 +7694,5 @@ texture = SubResource("NoiseTexture2D_rxbgi")
 [connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea2" to="." method="_zombie_spawn_area2"]
 [connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea3" to="." method="_zombie_spawn_area3"]
 [connection signal="body_entered" from="ZombieSpawnLocations/SpawnArea4" to="." method="_zombie_spawn_area4"]
+[connection signal="timeout" from="Instakill" to="." method="_on_instakill_timeout"]
+[connection signal="timeout" from="DoublePoints" to="." method="_on_double_points_timeout"]
