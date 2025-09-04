@@ -57,7 +57,7 @@ var box_prompted: bool = false
 
 var can_switch_weapon: bool = true
 
-var reload_speed: float = 0.0
+var reload_speed: float = 1.0
 
 var points: int = 0
 
@@ -190,8 +190,12 @@ class weapon_class extends Node2D:
 			can_shoot = false
 			can_reload = false
 			if reload_sound != null:
+				if global_scope.reload_speed != 1.0:
+					reload_sound.pitch_scale = 1 * (global_scope.reload_speed + 1)
 				reload_sound.play()
-			reload_timer.wait_time = reload_time - global_scope.reload_speed
+			print("Normal, ", reload_time)
+			print("Adjusted, ", (reload_time * global_scope.reload_speed))
+			reload_timer.wait_time = (reload_time * global_scope.reload_speed)
 			reload_timer.start()
 			
 	func finish_reload() -> void:
@@ -303,7 +307,7 @@ func drink_speedcola(price: int) -> void:
 		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
 	else:
 		player_sprite.animation = "nogun"
-	reload_speed = 0.2
+	reload_speed = .5
 	var perkIcon = TextureRect.new()
 	perkIcon.texture = perk_icons["SpeedCola"]
 	perkIcon.name = "SpeedCola"

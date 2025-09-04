@@ -71,7 +71,7 @@ func _ready() -> void:
 	load_box_location()
 
 func _physics_process(_delta: float) -> void:
-	for e in fogs:
+	for e in fogs.get_children():
 		var noise_tex := e.texture as NoiseTexture2D
 		if noise_tex and noise_tex.noise:
 			var noise := noise_tex.noise as FastNoiseLite
@@ -164,7 +164,7 @@ func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 			powerups.call_deferred("add_child", max_blammo_sprite)
 		1:
 			var instakill_sprite: Sprite2D = Sprite2D.new()
-			instakill_sprite.texture = DOUBLE_POINTS_MODEL
+			instakill_sprite.texture = INSTAKILL_MODEL
 			instakill_sprite.scale = Vector2(0.06,0.06)
 			instakill_sprite.position = positioning
 			var instakill_area: Area2D = Area2D.new()
@@ -192,7 +192,7 @@ func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 			powerups.call_deferred("add_child", double_points_sprite)
 		3:
 			var kaboom_sprite: Sprite2D = Sprite2D.new()
-			kaboom_sprite.texture = DOUBLE_POINTS_MODEL
+			kaboom_sprite.texture = KABOOM_MODEL
 			kaboom_sprite.scale = Vector2(0.078,0.078)
 			kaboom_sprite.position = positioning
 			var kaboom_area: Area2D = Area2D.new()
@@ -205,21 +205,6 @@ func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
 			kaboom_sprite.call_deferred("add_child", kaboom_area)
 			powerups.call_deferred("add_child", kaboom_sprite)
 
-	if specific == "max":
-		var max_blammo_sprite: Sprite2D = Sprite2D.new()
-		max_blammo_sprite.texture = MAX_AMMO_MODEL
-		max_blammo_sprite.scale = Vector2(0.7,0.7)
-		max_blammo_sprite.position = positioning
-		var max_blammo_area: Area2D = Area2D.new()
-		max_blammo_area.connect("body_entered", Callable(collect_powerup).bind("maxblammo", max_blammo_sprite))
-		var max_blammo_area_collision: CollisionShape2D = CollisionShape2D.new()
-		var rectangle: RectangleShape2D = RectangleShape2D.new()
-		rectangle.size = Vector2(58.595,53.102)
-		max_blammo_area_collision.shape = rectangle
-		max_blammo_area.call_deferred("add_child", max_blammo_area_collision)
-		max_blammo_sprite.call_deferred("add_child", max_blammo_area)
-		powerups.call_deferred("add_child", max_blammo_sprite)
-
 func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 	player.increment_kills()
 	var multi = 1
@@ -229,8 +214,8 @@ func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 		"basic":
 			player.points += 100 * multi
 
-	var powerup_rng = randi_range(1,12)
-	if powerup_rng == 12:
+	var powerup_rng = randi_range(1,15)
+	if powerup_rng == 15:
 		spawn_powerup(zm_position)
 
 	zombies_alive -= 1
@@ -294,6 +279,8 @@ func _on_spawner_timeout() -> void:
 	zombie.health_modifier = zombie_health_modifier
 	zombie.name = "Zombie" + str(zombie_index)
 	zombie_index += 1
+	if instakill_active:
+		zombie.activate_instakill()
 	zombies.call_deferred("add_child", zombie)
 	zombie.position = zombie_spawns[in_location][spawn_index].position
 	zombie.connect("death", zombie_death)

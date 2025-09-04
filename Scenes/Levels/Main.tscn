@@ -7268,7 +7268,7 @@ texture = ExtResource("1_a113d")
 sources/0 = SubResource("TileSetAtlasSource_t355s")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5wxa7"]
-size = Vector2(91.3257, 71.5355)
+size = Vector2(103.388, 86.2967)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8nowq"]
 size = Vector2(76.6792, 42.0128)
@@ -7372,7 +7372,8 @@ scale = Vector2(1.87497, 1.87497)
 texture = ExtResource("4_dm2qe")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TileMapLayer/MysteryBox/Box"]
-position = Vector2(7.62939e-06, -0.567749)
+position = Vector2(-1.43789e-06, 0)
+scale = Vector2(1, 1)
 shape = SubResource("RectangleShape2D_5wxa7")
 
 [node name="Move" type="AudioStreamPlayer2D" parent="TileMapLayer/MysteryBox/Box"]
