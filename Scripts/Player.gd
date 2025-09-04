@@ -54,6 +54,9 @@ var game_state: bool = true
 var can_action: bool = true
 
 var box_prompted: bool = false
+var box_weapon: String = ""
+var weapon_ready: bool = false
+var sprinting: bool = false
 
 var can_switch_weapon: bool = true
 
@@ -181,6 +184,16 @@ class weapon_class extends Node2D:
 			can_shoot = true
 			can_reload = true
 
+	func new_version() -> void:
+		fill_ammo()
+		unpap()
+		
+	func unpap() -> void:
+		pass
+		
+	func pap() -> void:
+		pass
+
 	func reload() -> void:
 		if current_mag >= max_bullet_mag or not currently_equipped:
 			return
@@ -193,8 +206,6 @@ class weapon_class extends Node2D:
 				if global_scope.reload_speed != 1.0:
 					reload_sound.pitch_scale = 1 * (global_scope.reload_speed + 1)
 				reload_sound.play()
-			print("Normal, ", reload_time)
-			print("Adjusted, ", (reload_time * global_scope.reload_speed))
 			reload_timer.wait_time = (reload_time * global_scope.reload_speed)
 			reload_timer.start()
 			
@@ -368,6 +379,11 @@ func prompt_perk(perk: String) -> void:
 func prompt_box() -> void:
 	purchase.text = "Buy [color=yellow][/color]Mystery box for [color=yellow]950 points[/color]"
 	box_prompted = true
+	
+func prompt_box_gun(gun: String = "") -> void:
+	box_weapon = gun
+	purchase.text = "Take %s" % gun
+	weapon_ready = true
 
 func remove_prompt() -> void:
 	prompted = ""
@@ -445,6 +461,13 @@ func _physics_process(_delta: float) -> void:
 	var input_vector := Vector2.ZERO
 
 	if can_move:
+		
+		if Input.is_action_pressed("sprint"):
+			sprinting = true
+			speed = 350.0
+		else:
+			speed = 200.0
+			sprinting = false
 
 		if Input.is_action_pressed("walk_up"):
 			input_vector.y -= 1
@@ -468,21 +491,29 @@ func _physics_process(_delta: float) -> void:
 			
 		if box_prompted:
 			world.buy_box()
+			remove_prompt()
 			box_prompted = false
+		
+		if weapon_ready and box_weapon:
+			add_weapon_to_inventory(box_weapon)
+			purchase.text = ""
+			box_weapon = ""
+			if world.in_mystery_box_area:
+				prompt_box()
 	
 	if Input.is_action_pressed("shoot"): #remove just for bullet spam
-		if weapon_equipped and can_action:
+		if weapon_equipped and can_action and not sprinting:
 			weapons[weapon_equipped].shoot()
 
 	if Input.is_action_just_pressed("reload"):
-		if weapon_equipped and can_action:
+		if weapon_equipped and can_action and not sprinting:
 			weapons[weapon_equipped].reload()
 
-	if Input.is_action_just_pressed("weapon_scroll_up") and can_switch_weapon:
+	if Input.is_action_just_pressed("weapon_scroll_up") and can_switch_weapon and not sprinting:
 		stop_current_action()
 		switch_weapon()
 	
-	if Input.is_action_just_pressed("weapon_scroll_down") and can_switch_weapon:
+	if Input.is_action_just_pressed("weapon_scroll_down") and can_switch_weapon and not sprinting:
 		stop_current_action()
 		switch_weapon(false)
 		

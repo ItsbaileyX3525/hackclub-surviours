@@ -21,6 +21,8 @@ extends Node2D
 @onready var fogs: Node2D = $Fogs
 @onready var instakill_timer: Timer = $Instakill
 @onready var double_points_timer: Timer = $DoublePoints
+@onready var mystery_spin: AudioStreamPlayer2D = $TileMapLayer/MysteryBox/Box/Spin
+@onready var box_finish: Timer = $BoxFinish
 
 var in_location: String = "grasslands"
 
@@ -63,6 +65,8 @@ var current_box_location: int
 var box_spins_till_move: int
 var current_box_iteration: int
 var can_prompt_box: bool = true
+var box_has_weapon: bool = false
+var in_mystery_box_area: bool = false
 
 var instakill_active: bool = false
 var double_points_active: bool = false
@@ -310,14 +314,37 @@ func prompt_short_jingle(perk: String) -> void:
 func buy_box() -> void:
 	can_prompt_box = false
 	current_box_iteration += 1
+	mystery_spin.play()
+	await get_tree().create_timer(6.0).timeout
 	if current_box_iteration >= box_spins_till_move:
 		#Play movement animation or whatnot
 		box_move.play()
 		await get_tree().create_timer(5.5).timeout
 		box.visible = false
+		box.reparent($".")
 		await get_tree().create_timer(1.5).timeout
 		box.visible = true 
 		load_box_location()
+	
+	box_has_weapon = true
+	var valid_guns: Array
+	for e in player.weapons:
+		valid_guns.append(e)
+	for e in player.weapon_inventory:
+		valid_guns.erase(e)
+	var random_gun = randi_range(0, len(valid_guns) - 1)
+	var gun_to_spawn = valid_guns[random_gun]
+	player.prompt_box_gun(gun_to_spawn)
+	box_finish.start()
+
+func take_weapon() -> void:
+	box_finish.stop()
+	box_has_weapon = false
+	can_prompt_box = true
+
+func _on_box_finish_timeout() -> void:
+	box_has_weapon = false
+	can_prompt_box = true
 
 func _on_gun_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
@@ -361,10 +388,14 @@ func _on_speed_cola_exited(body: Node2D) -> void:
 	if body.name == "Player": body.remove_prompt()
 
 func _on_box_body_entered(body: Node2D) -> void:
-	if body.name == "Player" and can_prompt_box: body.prompt_box()
+	if body.name == "Player" and can_prompt_box: 
+		in_mystery_box_area = true
+		body.prompt_box()
 
 func _on_box_body_exited(body: Node2D) -> void:
-	if body.name == "Player": body.remove_prompt()
+	if body.name == "Player": 
+		in_mystery_box_area = false
+		body.remove_prompt()
 
 func _zombie_spawn_area1(body: Node2D) -> void:
 	if body.name == "Player": in_location = "grasslands"
