@@ -18,6 +18,10 @@ extends CharacterBody2D
 @onready var ak_marker: Marker2D = $PlayerSprite/akMarker
 var world: Node2D
 @onready var game_over: Control = $Camera2D/CanvasLayer/Control/GameOver
+@onready var knife_anim: AnimationPlayer = $PlayerSprite/KnifeArea/Sprite2D/AnimationPlayer
+@onready var knife_sprite: Sprite2D = $PlayerSprite/KnifeArea/Sprite2D
+@onready var knife_area: Area2D = $PlayerSprite/KnifeArea
+@onready var pause: Control = $Camera2D/CanvasLayer/Pause
 
 @onready var heart_states: Array = [
 	preload("res://Assets/Charcter/Hearts/heartFull.png"),
@@ -62,6 +66,7 @@ var box_prompted: bool = false
 var box_weapon: String = ""
 var weapon_ready: bool = false
 var sprinting: bool = false
+var can_knife: bool = true
 
 var can_switch_weapon: bool = true
 
@@ -501,6 +506,9 @@ func _physics_process(delta: float) -> void:
 	
 	var input_vector := Vector2.ZERO
 
+	if Input.is_action_just_pressed("pause"):
+		pause.visible = not pause.visible
+
 	if can_move:
 		
 		if Input.is_action_pressed("sprint"):
@@ -536,6 +544,28 @@ func _physics_process(delta: float) -> void:
 	velocity = input_vector * speed
 	move_and_slide()
 	
+	if Input.is_action_just_pressed("knife") and can_knife and not sprinting:
+		stop_current_action()
+		player_sprite.animation = "drink"
+		can_action = false
+		can_switch_weapon = false
+		can_knife = false
+		knife_sprite.visible = true
+		knife_anim.play("slash")
+		for e in knife_area.get_overlapping_bodies():
+			if e.name.begins_with("Zombie"):
+				e.take_damage(10)
+				break #Only one zombie 
+		await knife_anim.animation_finished
+		can_knife = true
+		knife_sprite.visible = false
+		can_switch_weapon = true
+		can_action = true
+		if weapon_equipped:
+			player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+		else:
+			player_sprite.animation = "nogun"
+
 	if Input.is_action_just_pressed("interact"):
 		if prompted in valid_perks:
 			perks[prompted][2].call(perks[prompted][0])
@@ -585,6 +615,7 @@ func remove_weapon() -> void:
 	var weapon_to_remove: int = weapon_inventory_index
 	switch_weapon()
 	if len(weapon_inventory) > 1:
+		weapons[weapon_equipped].fill_ammo
 		weapon_inventory.remove_at(weapon_to_remove)
 	else:
 		weapons[weapon_equipped].unequip()
@@ -644,3 +675,7 @@ func death() -> void:
 	game_over.visible = true
 	$Camera2D/CanvasLayer/Control/GameOver/HBoxContainer/Label.text = "USERNAME | SCORE | KILLS
 YOU | %s | %s" % [points, kills]
+
+
+func _on_quit_pressed() -> void:
+	get_tree().quit()

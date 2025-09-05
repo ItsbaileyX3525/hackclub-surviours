@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://boc7x50bdow6d"]
+[gd_scene load_steps=24 format=3 uid="uid://boc7x50bdow6d"]
 
 [ext_resource type="Script" uid="uid://b80lwq8sw2jhi" path="res://Scripts/Player.gd" id="1_kyqiw"]
 [ext_resource type="Texture2D" uid="uid://diin0v31jpb4u" path="res://Assets/Charcter/survivor1_stand.png" id="1_rpqav"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://2mxdnauwd78y" path="res://Assets/RoundNumbers/0.png" id="3_52ee3"]
 [ext_resource type="Texture2D" uid="uid://dlfmxlwd0ad2j" path="res://Assets/Charcter/survivor1_gun.png" id="3_nn08x"]
 [ext_resource type="Texture2D" uid="uid://dhlnlw7r53inw" path="res://Assets/Blood.png" id="4_bhhdu"]
+[ext_resource type="Theme" uid="uid://j2qymavuknfa" path="res://Assets/Themes/UI.tres" id="5_1e7my"]
 [ext_resource type="Texture2D" uid="uid://bpew6d0jdis87" path="res://Assets/Charcter/survivor1_hold.png" id="5_bhhdu"]
 [ext_resource type="Texture2D" uid="uid://dl7qcryotlolg" path="res://Assets/Charcter/ak/ak.png" id="5_miouo"]
 [ext_resource type="Texture2D" uid="uid://c3i6t2erx21sf" path="res://Assets/Charcter/survivor1_reload.png" id="6_bhhdu"]
@@ -13,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://dplb3w4c2bilk" path="res://Assets/Charcter/shotgun/olympia.png" id="7_ksbbd"]
 [ext_resource type="Texture2D" uid="uid://vsj3wvojtrgu" path="res://Assets/Charcter/shotgun/olympiaReload.png" id="8_glx4g"]
 [ext_resource type="AudioStream" uid="uid://1opm2312m42d" path="res://Assets/perks/drink.mp3" id="9_megsn"]
+[ext_resource type="Texture2D" uid="uid://74x6iji5wbrc" path="res://Assets/Charcter/slash.png" id="13_o3h8g"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_kyqiw"]
 animations = [{
@@ -91,6 +93,46 @@ height = 356
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(0.164835, 0.840659)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1e7my"]
+size = Vector2(32, 46)
+
+[sub_resource type="Animation" id="Animation_arntx"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_1e7my"]
+resource_name = "slash"
+length = 0.37
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0333333, 0.0666667, 0.1, 0.133333, 0.166667, 0.2, 0.233333, 0.266667, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_lslt6"]
+_data = {
+&"RESET": SubResource("Animation_arntx"),
+&"slash": SubResource("Animation_1e7my")
+}
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kyqiw"]
 size = Vector2(34, 44)
@@ -310,6 +352,56 @@ text = "USERNAME | SCORE | KILLS
 YOU | 1 | 1"
 horizontal_alignment = 1
 
+[node name="Pause" type="Control" parent="Camera2D/CanvasLayer"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="Camera2D/CanvasLayer/Pause"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Camera2D/CanvasLayer/Pause/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 40
+
+[node name="Label" type="Label" parent="Camera2D/CanvasLayer/Pause/CenterContainer/MarginContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 46
+text = "PAUSED"
+
+[node name="CenterContainer2" type="CenterContainer" parent="Camera2D/CanvasLayer/Pause"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Camera2D/CanvasLayer/Pause/CenterContainer2"]
+layout_mode = 2
+
+[node name="Quit" type="Button" parent="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("5_1e7my")
+text = " QUIT "
+
 [node name="PlayerSprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_kyqiw")
 animation = &"nogun"
@@ -326,6 +418,28 @@ color = Color(0.93664, 0.446557, 0.332133, 1)
 energy = 0.75
 texture = SubResource("GradientTexture2D_megsn")
 
+[node name="KnifeArea" type="Area2D" parent="PlayerSprite"]
+position = Vector2(26, 0)
+collision_layer = 4
+collision_mask = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerSprite/KnifeArea"]
+position = Vector2(6, 1)
+shape = SubResource("RectangleShape2D_1e7my")
+
+[node name="Sprite2D" type="Sprite2D" parent="PlayerSprite/KnifeArea"]
+visible = false
+rotation = 1.57079
+scale = Vector2(0.110282, 0.110282)
+texture = ExtResource("13_o3h8g")
+vframes = 11
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="PlayerSprite/KnifeArea/Sprite2D"]
+libraries = {
+&"": SubResource("AnimationLibrary_lslt6")
+}
+speed_scale = 0.7
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 visible = false
 position = Vector2(-1, 1)
@@ -338,4 +452,5 @@ one_shot = true
 [node name="DrinkPerk" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("9_megsn")
 
+[connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
 [connection signal="timeout" from="RegenerateTimer" to="." method="_on_regenerate_timer_timeout"]

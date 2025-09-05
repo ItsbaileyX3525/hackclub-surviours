@@ -82,7 +82,7 @@ func _ready() -> void:
 
 	is_ready = true
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
 
@@ -102,7 +102,8 @@ func _physics_process(_delta: float) -> void:
 	else:
 		var next_point = agent.get_next_path_position()
 		var direction = (next_point - global_transform.origin).normalized()
-		zombie_sprite.rotation = direction.angle()
+		var target_rotation = direction.angle()
+		zombie_sprite.rotation = lerp_angle(zombie_sprite.rotation, target_rotation, delta * 5.0)
 		velocity = direction * agent.max_speed
 		move_and_slide()
 
