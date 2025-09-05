@@ -61,6 +61,7 @@ var is_dead: bool = false
 var stop_tracking: bool = false
 var max_health: float
 
+
 func sprint() -> void:
 	sprint_sound.stream = sprint_sounds[randi_range(0,8)]
 	sprint_sound.play()

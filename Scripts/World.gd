@@ -9,6 +9,8 @@ extends Node2D
 @onready var J_Jingle_short: AudioStreamPlayer2D = $Perks/Juggernog/Jingle2
 @onready var QR_Jingle_short: AudioStreamPlayer2D = $Perks/QuickRevive/Jingle2
 @onready var SC_Jingle_short: AudioStreamPlayer2D = $Perks/SpeedCola/Jingle2
+@onready var SU_jingle: AudioStreamPlayer2D = $Perks/StaminUp/Jingle
+@onready var SU_jingle_short: AudioStreamPlayer2D = $Perks/StaminUp/Jingle2
 @onready var box: Area2D = $TileMapLayer/MysteryBox/Box
 @onready var round_flip: AudioStreamPlayer = $RoundFlip
 @onready var round_flip_short: AudioStreamPlayer = $RoundFlipShort
@@ -149,7 +151,7 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			await get_tree().create_timer(3).timeout
 			player.points += 400
 
-func spawn_powerup(positioning: Vector2, specific: String = "") -> void:
+func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 	var powerup_rng = randi_range(0,3)
 	match powerup_rng:
 		0:
@@ -310,14 +312,22 @@ func prompt_short_jingle(perk: String) -> void:
 			SC_Jingle_short.play()
 		"Juggernog":
 			J_Jingle_short.play()
+		"StaminUp":
+			SU_jingle_short.play()
 
 func buy_box() -> void:
+	if player.points < 950:
+		#Fail noise maybe?
+		return
+	
+	player.points -= 950
 	can_prompt_box = false
 	current_box_iteration += 1
 	mystery_spin.play()
 	await get_tree().create_timer(6.0).timeout
 	if current_box_iteration >= box_spins_till_move:
 		#Play movement animation or whatnot
+		player.points += 950
 		box_move.play()
 		await get_tree().create_timer(5.5).timeout
 		box.visible = false
@@ -368,24 +378,36 @@ func _on_quick_revive_exited(body: Node2D) -> void:
 
 func _on_qr_jingle_radius_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		if randi_range(0, 5) == 5 and not QR_jingle.playing:
+		if randi_range(0, 6) == 5 and not QR_jingle.playing:
 			QR_jingle.play()
 
 func _on_j_jingle_radius_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		if randi_range(0, 5) == 5 and not J_jingle.playing:
+		if randi_range(0, 6) == 5 and not J_jingle.playing:
 			J_jingle.play()
 
 func _on_sc_jingle_entered(body: Node2D) -> void:
 	if body.name == "Player":
-		if randi_range(0, 5) == 5 and not SC_jingle.playing:
+		if randi_range(0, 6) == 5 and not SC_jingle.playing:
 			SC_jingle.play()
+
+func _on_su_jingle_body_entered(body: Node2D) -> void:
+	if body.name == "Player":
+		if randi_range(0, 6) == 5 and not SU_jingle.playing:
+			SU_jingle.play()
 
 func _on_speed_cola_entered(body: Node2D) -> void:
 	if body.name == "Player": body.prompt_perk("SpeedCola")
 
 func _on_speed_cola_exited(body: Node2D) -> void:
 	if body.name == "Player": body.remove_prompt()
+
+func _on_stamin_up_body_entered(body: Node2D) -> void:
+	if body.name == "Player": body.prompt_perk("StaminUp")
+
+func _on_stamin_up_body_exited(body: Node2D) -> void:
+	if body.name == "Player": body.remove_prompt()
+
 
 func _on_box_body_entered(body: Node2D) -> void:
 	if body.name == "Player" and can_prompt_box: 

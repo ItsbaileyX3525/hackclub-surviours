@@ -28,7 +28,8 @@ var world: Node2D
 @onready var perk_icons: Dictionary = {
 	"Juggernog" : preload("res://Assets/perks/Juggernog/JuggernogIcon.webp"),
 	"QuickRevive" : preload("res://Assets/perks/QuickRevive/QuickReviveIcon.webp"),
-	"SpeedCola" : preload("res://Assets/perks/Speedcola/SpeedColaIcon.webp")
+	"SpeedCola" : preload("res://Assets/perks/Speedcola/SpeedColaIcon.webp"),
+	"StaminUp" : preload("res://Assets/perks/Staminup/StaminupIcon.webp")
 }
 
 @onready var rounds: Array = [
@@ -47,6 +48,10 @@ var world: Node2D
 var has_juggernog: bool = false
 var has_quickrevive: bool = false
 var has_speedcola: bool = false
+var has_staminup: bool = false
+
+var max_breath: float = 250.0
+var breath: float = 250.0
 
 var can_move: bool = true
 var kills: int = 0
@@ -362,10 +367,46 @@ func drink_juggernog(price: int) -> void:
 	perkIcon.custom_minimum_size = Vector2(54,54)
 	perk_container.call_deferred("add_child", perkIcon)
 
+func drink_staminup(price: int) -> void:
+	if not points >= price:
+		return
+
+	if has_staminup:
+		return
+
+	points -= price
+	stop_current_action()
+	can_action = false
+	weapons[weapon_equipped].can_shoot = false
+	has_staminup = true
+	max_breath = 375.0
+	player_sprite.animation = "drink"
+	drink_perk.play()
+	can_switch_weapon = false
+	world.prompt_short_jingle("StaminUp")
+	await get_tree().create_timer(3).timeout
+	can_action = true
+	can_switch_weapon = true
+	weapons[weapon_equipped].can_shoot = true
+	if weapon_equipped:
+		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	else:
+		player_sprite.animation = "nogun"
+	regenerate_timer.start()
+	var perkIcon = TextureRect.new()
+	perkIcon.texture = perk_icons["StaminUp"]
+	perkIcon.name = "StaminUp"
+	perkIcon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	perkIcon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	perkIcon.custom_minimum_size = Vector2(54,54)
+	perk_container.call_deferred("add_child", perkIcon)
+
 var perks: Dictionary = {
 	"Juggernog" : [2500, "Purchase [color=red]Juggernog[/color] cola for [color=yellow]2500 points[/color]", Callable(drink_juggernog)], #Price, text, func
 	"QuickRevive" : [500, "Purchase [color=lightblue]Quick revive[/color] for [color=yellow]500 points[/color]", Callable(drink_quickrevive)],
-	"SpeedCola" : [4000, "Purchase [color=green]Speed cola[/color] for [color=yellow]4000 points[/color]", Callable(drink_speedcola)]
+	"SpeedCola" : [4000, "Purchase [color=green]Speed cola[/color] for [color=yellow]4000 points[/color]", Callable(drink_speedcola)],
+	"StaminUp" : [2000, "Purchase [color=yellow]Stamin-up[/color] for [color=yellow]2000 points[/color]", Callable(drink_staminup)]
+
 }
 
 var valid_perks: Array
@@ -451,7 +492,7 @@ func _ready() -> void:
 	points = 500
 	world = get_tree().get_first_node_in_group("world")
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	score.text = str(points)
 	if weapon_equipped:
 		bullets_left.text = "%s / %s" % [weapons[weapon_equipped].current_mag, weapons[weapon_equipped].bullets_left]
@@ -463,11 +504,21 @@ func _physics_process(_delta: float) -> void:
 	if can_move:
 		
 		if Input.is_action_pressed("sprint"):
-			sprinting = true
-			speed = 350.0
+			if breath <= 0:
+				speed = 200.0
+				sprinting = false
+			else:
+				sprinting = true
+				if has_staminup:
+					speed = 300.0
+				else:
+					speed = 275.0
+				breath -= delta * 100
 		else:
 			speed = 200.0
 			sprinting = false
+			if breath <= max_breath:
+				breath += delta * 100
 
 		if Input.is_action_pressed("walk_up"):
 			input_vector.y -= 1
