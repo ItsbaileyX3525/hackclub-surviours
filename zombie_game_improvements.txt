@@ -1,0 +1,14 @@
+- Add double tap 2.0 (optionally add both 1.0 and 2.0 versions)
+- Make quick revive revive yourself
+- Create mystery box animation
+- Adjust zombie health and weapon damage for long term sessions
+- Make weapons local instead of global (fix persistant ammo properly) ((athough current logic accounts for this completely so its fine to leave))
+- Add point gain effects
+
+Ages from now improvements: (Production time increased however due to the uncle coming in clutch)
+
+- Remake perk assets 
+- Remake perk sounds
+- Remake zombie sounds
+- Remake mystery box sound
+- More...
