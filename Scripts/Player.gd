@@ -22,6 +22,10 @@ var world: Node2D
 @onready var knife_sprite: Sprite2D = $PlayerSprite/KnifeArea/Sprite2D
 @onready var knife_area: Area2D = $PlayerSprite/KnifeArea
 @onready var pause: Control = $Camera2D/CanvasLayer/Pause
+@onready var insta_kill: TextureRect = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/InstaKill
+@onready var double_points: TextureRect = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/DoublePoints
+@onready var insta_killer_remain: Label = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/InstaKill/InstaKillerRemain
+@onready var double_points_remain: Label = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/DoublePoints/DoublePointsRemain
 
 @onready var heart_states: Array = [
 	preload("res://Assets/Charcter/Hearts/heartFull.png"),
@@ -428,13 +432,26 @@ func prompt_box() -> void:
 	
 func prompt_box_gun(gun: String = "") -> void:
 	box_weapon = gun
-	purchase.text = "Take %s" % gun
+	purchase.text = "Press E to take the [color=yellow]%s[/color]" % gun
 	weapon_ready = true
+
+func remove_prompt_gun() -> void:
+	prompted = ""
+	purchase.text = ""
+	box_weapon = ""
+	weapon_ready = false
+	box_prompted = false
 
 func remove_prompt() -> void:
 	prompted = ""
 	purchase.text = ""
 	box_prompted = false
+
+func display_powerup(powerup: String) -> void:
+	if powerup == "DoublePoints":
+		double_points.visible = true
+	elif powerup == "Instakill":
+		insta_kill.visible = true
 
 func update_round(new_round: int) -> void:
 	new_round += 1
@@ -579,6 +596,7 @@ func _physics_process(delta: float) -> void:
 			add_weapon_to_inventory(box_weapon)
 			purchase.text = ""
 			box_weapon = ""
+			world.taken_weapon()
 			if world.in_mystery_box_area:
 				prompt_box()
 	

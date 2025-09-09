@@ -69,6 +69,7 @@ var current_box_iteration: int
 var can_prompt_box: bool = true
 var box_has_weapon: bool = false
 var in_mystery_box_area: bool = false
+var gun_to_spawn
 
 var instakill_active: bool = false
 var double_points_active: bool = false
@@ -163,7 +164,7 @@ func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 			max_blammo_area.connect("body_entered", Callable(collect_powerup).bind("maxblammo", max_blammo_sprite))
 			var max_blammo_area_collision: CollisionShape2D = CollisionShape2D.new()
 			var rectangle: RectangleShape2D = RectangleShape2D.new()
-			rectangle.size = Vector2(58.595,53.102)
+			rectangle.size = Vector2(65.595,65.102)
 			max_blammo_area_collision.shape = rectangle
 			max_blammo_area.call_deferred("add_child", max_blammo_area_collision)
 			max_blammo_sprite.call_deferred("add_child", max_blammo_area)
@@ -177,7 +178,7 @@ func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 			instakill_area.connect("body_entered", Callable(collect_powerup).bind("instakill", instakill_sprite))
 			var instakill_area_collision: CollisionShape2D = CollisionShape2D.new()
 			var rectangle: RectangleShape2D = RectangleShape2D.new()
-			rectangle.size = Vector2(58.595,53.102)
+			rectangle.size = Vector2(65.595,65.102)
 			instakill_area_collision.shape = rectangle
 			instakill_area.call_deferred("add_child", instakill_area_collision)
 			instakill_sprite.call_deferred("add_child", instakill_area)
@@ -191,7 +192,7 @@ func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 			double_points_area.connect("body_entered", Callable(collect_powerup).bind("doublepoints", double_points_sprite))
 			var double_points_area_collision: CollisionShape2D = CollisionShape2D.new()
 			var rectangle: RectangleShape2D = RectangleShape2D.new()
-			rectangle.size = Vector2(58.595,53.102)
+			rectangle.size = Vector2(65.595,65.102)
 			double_points_area_collision.shape = rectangle
 			double_points_area.call_deferred("add_child", double_points_area_collision)
 			double_points_sprite.call_deferred("add_child", double_points_area)
@@ -205,7 +206,7 @@ func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 			kaboom_area.connect("body_entered", Callable(collect_powerup).bind("kaboom", kaboom_sprite))
 			var kaboom_area_collision: CollisionShape2D = CollisionShape2D.new()
 			var rectangle: RectangleShape2D = RectangleShape2D.new()
-			rectangle.size = Vector2(58.595,53.102)
+			rectangle.size = Vector2(65.595,65.102)
 			kaboom_area_collision.shape = rectangle
 			kaboom_area.call_deferred("add_child", kaboom_area_collision)
 			kaboom_sprite.call_deferred("add_child", kaboom_area)
@@ -220,8 +221,8 @@ func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 		"basic":
 			player.points += 100 * multi
 
-	var powerup_rng = randi_range(1,15)
-	if powerup_rng == 15:
+	var powerup_rng = randi_range(1,40)
+	if powerup_rng == 40:
 		spawn_powerup(zm_position)
 
 	zombies_alive -= 1
@@ -343,18 +344,24 @@ func buy_box() -> void:
 	for e in player.weapon_inventory:
 		valid_guns.erase(e)
 	var random_gun = randi_range(0, len(valid_guns) - 1)
-	var gun_to_spawn = valid_guns[random_gun]
+	gun_to_spawn = valid_guns[random_gun]
 	player.prompt_box_gun(gun_to_spawn)
 	box_finish.start()
 
-func take_weapon() -> void:
+func taken_weapon() -> void:
 	box_finish.stop()
+	gun_to_spawn = ""
 	box_has_weapon = false
 	can_prompt_box = true
+	player.remove_prompt_gun()
 
 func _on_box_finish_timeout() -> void:
+	player.remove_prompt_gun()
 	box_has_weapon = false
+	gun_to_spawn = ""
 	can_prompt_box = true
+	if in_mystery_box_area:
+		player.prompt_box()
 
 func _on_gun_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
@@ -410,9 +417,12 @@ func _on_stamin_up_body_exited(body: Node2D) -> void:
 
 
 func _on_box_body_entered(body: Node2D) -> void:
-	if body.name == "Player" and can_prompt_box: 
+	if body.name == "Player": 
 		in_mystery_box_area = true
-		body.prompt_box()
+		if box_has_weapon and gun_to_spawn:
+			player.prompt_box_gun(gun_to_spawn)
+		elif can_prompt_box:
+			body.prompt_box()
 
 func _on_box_body_exited(body: Node2D) -> void:
 	if body.name == "Player": 

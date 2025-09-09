@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://boc7x50bdow6d"]
+[gd_scene load_steps=26 format=3 uid="uid://boc7x50bdow6d"]
 
 [ext_resource type="Script" uid="uid://b80lwq8sw2jhi" path="res://Scripts/Player.gd" id="1_kyqiw"]
 [ext_resource type="Texture2D" uid="uid://diin0v31jpb4u" path="res://Assets/Charcter/survivor1_stand.png" id="1_rpqav"]
@@ -8,9 +8,11 @@
 [ext_resource type="Texture2D" uid="uid://dhlnlw7r53inw" path="res://Assets/Blood.png" id="4_bhhdu"]
 [ext_resource type="Theme" uid="uid://j2qymavuknfa" path="res://Assets/Themes/UI.tres" id="5_1e7my"]
 [ext_resource type="Texture2D" uid="uid://bpew6d0jdis87" path="res://Assets/Charcter/survivor1_hold.png" id="5_bhhdu"]
+[ext_resource type="Texture2D" uid="uid://bkvfkngqrt00x" path="res://Assets/Sounds/powerups/Instakill.png" id="5_lslt6"]
 [ext_resource type="Texture2D" uid="uid://dl7qcryotlolg" path="res://Assets/Charcter/ak/ak.png" id="5_miouo"]
 [ext_resource type="Texture2D" uid="uid://c3i6t2erx21sf" path="res://Assets/Charcter/survivor1_reload.png" id="6_bhhdu"]
 [ext_resource type="Texture2D" uid="uid://bhn2a2gtbxvgp" path="res://Assets/Charcter/ak/akReload.png" id="6_o3h8g"]
+[ext_resource type="Texture2D" uid="uid://5toc55jb8bkn" path="res://Assets/Sounds/powerups/DoublePoints.png" id="6_ulo2v"]
 [ext_resource type="Texture2D" uid="uid://dplb3w4c2bilk" path="res://Assets/Charcter/shotgun/olympia.png" id="7_ksbbd"]
 [ext_resource type="Texture2D" uid="uid://vsj3wvojtrgu" path="res://Assets/Charcter/shotgun/olympiaReload.png" id="8_glx4g"]
 [ext_resource type="AudioStream" uid="uid://1opm2312m42d" path="res://Assets/perks/drink.mp3" id="9_megsn"]
@@ -352,6 +354,71 @@ text = "USERNAME | SCORE | KILLS
 YOU | 1 | 1"
 horizontal_alignment = 1
 
+[node name="Powerups" type="Control" parent="Camera2D/CanvasLayer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="Camera2D/CanvasLayer/Control/Powerups"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+scale = Vector2(1.02548, 1.02548)
+
+[node name="MarginContainer" type="MarginContainer" parent="Camera2D/CanvasLayer/Control/Powerups/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 20
+
+[node name="Powerups" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="InstaKill" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups"]
+visible = false
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+texture = ExtResource("5_lslt6")
+expand_mode = 1
+
+[node name="InstaKillerRemain" type="Label" parent="Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/InstaKill"]
+layout_mode = 0
+offset_left = 31.0
+offset_top = -6.0
+offset_right = 62.0
+offset_bottom = 27.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 23
+text = "30"
+horizontal_alignment = 2
+
+[node name="DoublePoints" type="TextureRect" parent="Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups"]
+visible = false
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+texture = ExtResource("6_ulo2v")
+expand_mode = 1
+
+[node name="DoublePointsRemain" type="Label" parent="Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/DoublePoints"]
+layout_mode = 0
+offset_left = 31.0
+offset_top = -6.0
+offset_right = 65.0
+offset_bottom = 27.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 23
+text = "30"
+horizontal_alignment = 2
+
 [node name="Pause" type="Control" parent="Camera2D/CanvasLayer"]
 visible = false
 layout_mode = 3
@@ -451,6 +518,14 @@ one_shot = true
 
 [node name="DrinkPerk" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("9_megsn")
+
+[node name="InstaKillTimer" type="Timer" parent="."]
+wait_time = 30.0
+one_shot = true
+
+[node name="DoublePointsTimer" type="Timer" parent="."]
+wait_time = 30.0
+one_shot = true
 
 [connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
 [connection signal="timeout" from="RegenerateTimer" to="." method="_on_regenerate_timer_timeout"]
