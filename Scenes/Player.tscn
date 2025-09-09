@@ -520,11 +520,11 @@ one_shot = true
 stream = ExtResource("9_megsn")
 
 [node name="InstaKillTimer" type="Timer" parent="."]
-wait_time = 30.0
+wait_time = 25.0
 one_shot = true
 
 [node name="DoublePointsTimer" type="Timer" parent="."]
-wait_time = 30.0
+wait_time = 25.0
 one_shot = true
 
 [connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/Quit" to="." method="_on_quit_pressed"]

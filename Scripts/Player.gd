@@ -26,6 +26,8 @@ var world: Node2D
 @onready var double_points: TextureRect = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/DoublePoints
 @onready var insta_killer_remain: Label = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/InstaKill/InstaKillerRemain
 @onready var double_points_remain: Label = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/DoublePoints/DoublePointsRemain
+@onready var insta_kill_timer: Timer = $InstaKillTimer
+@onready var double_points_timer: Timer = $DoublePointsTimer
 
 @onready var heart_states: Array = [
 	preload("res://Assets/Charcter/Hearts/heartFull.png"),
@@ -450,8 +452,12 @@ func remove_prompt() -> void:
 func display_powerup(powerup: String) -> void:
 	if powerup == "DoublePoints":
 		double_points.visible = true
+		double_points_remain.visible = true
+		double_points_timer.start()
 	elif powerup == "Instakill":
 		insta_kill.visible = true
+		insta_killer_remain.visible = true
+		insta_kill_timer.start()
 
 func update_round(new_round: int) -> void:
 	new_round += 1
@@ -520,6 +526,11 @@ func _physics_process(delta: float) -> void:
 		bullets_left.text = "%s / %s" % [weapons[weapon_equipped].current_mag, weapons[weapon_equipped].bullets_left]
 	else:
 		bullets_left.text = "0 / 0"
+	
+	if double_points.visible:
+		double_points_remain.text = str(ceili(double_points_timer.time_left))
+	if insta_kill.visible:
+		insta_killer_remain.text = str(ceili(insta_kill_timer.time_left))
 	
 	var input_vector := Vector2.ZERO
 

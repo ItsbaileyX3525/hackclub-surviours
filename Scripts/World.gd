@@ -125,6 +125,7 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			instakill.stream = INSTAKILL
 			add_child(instakill)
 			instakill.play()
+			player.display_powerup("Instakill")
 			powerup_node.call_deferred("queue_free")
 			instakill_timer.start()
 			await get_tree().create_timer(2.74).timeout
@@ -134,6 +135,7 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			var double_points: AudioStreamPlayer = AudioStreamPlayer.new()
 			double_points.stream = DOUBLE_POINTS
 			add_child(double_points)
+			player.display_powerup("DoublePoints")
 			double_points.play()
 			powerup_node.call_deferred("queue_free")
 			double_points_timer.start()
