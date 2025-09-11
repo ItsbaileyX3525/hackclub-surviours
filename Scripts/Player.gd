@@ -28,6 +28,7 @@ var world: Node2D
 @onready var double_points_remain: Label = $Camera2D/CanvasLayer/Control/Powerups/CenterContainer/MarginContainer/Powerups/DoublePoints/DoublePointsRemain
 @onready var insta_kill_timer: Timer = $InstaKillTimer
 @onready var double_points_timer: Timer = $DoublePointsTimer
+@onready var empty_mag: AudioStreamPlayer2D = $EmptyMag
 
 @onready var heart_states: Array = [
 	preload("res://Assets/Charcter/Hearts/heartFull.png"),
@@ -39,7 +40,8 @@ var world: Node2D
 	"Juggernog" : preload("res://Assets/perks/Juggernog/JuggernogIcon.webp"),
 	"QuickRevive" : preload("res://Assets/perks/QuickRevive/QuickReviveIcon.webp"),
 	"SpeedCola" : preload("res://Assets/perks/Speedcola/SpeedColaIcon.webp"),
-	"StaminUp" : preload("res://Assets/perks/Staminup/StaminupIcon.webp")
+	"StaminUp" : preload("res://Assets/perks/Staminup/StaminupIcon.webp"),
+	"DoubleTap" : preload("res://Assets/perks/DoubleTap/DoubleTapIcon.webp")
 }
 
 @onready var rounds: Array = [
@@ -59,6 +61,9 @@ var has_juggernog: bool = false
 var has_quickrevive: bool = false
 var has_speedcola: bool = false
 var has_staminup: bool = false
+var has_doubletap: bool = false
+
+var quick_revive_purchases: int = 0
 
 var max_breath: float = 250.0
 var breath: float = 250.0
@@ -67,6 +72,7 @@ var can_move: bool = true
 var kills: int = 0
 var game_state: bool = true
 var can_action: bool = true
+var can_be_tracked: bool = true
 
 var box_prompted: bool = false
 var box_weapon: String = ""
@@ -108,12 +114,53 @@ var health: int = 3:
 				health_state(1,2,2)
 			0:
 				health_state(2,2,2)
-				if game_state:
-					world.game_over()
-					game_state = false
+				check_death()
 			_:
 				print("Something wrong happened")
 		pass
+
+func check_death() -> void:
+	if not game_state:
+		return
+
+	if has_quickrevive:
+		has_doubletap = false
+		has_juggernog = false
+		has_quickrevive = false
+		has_speedcola = false
+		has_staminup = false
+		
+		health = 3
+		regenerate_timer.wait_time *= 2
+		reload_speed = 1
+		max_health = 3
+		breath = 250.0
+		max_breath = 250.0
+		
+		var children = perk_container.get_children()
+		for e in children:
+			e.call_deferred("queue_free")
+		
+		heart_3.visible = false
+		can_move = false
+		can_action = false
+		can_be_tracked = false
+		can_switch_weapon = false
+		stop_current_action()
+		can_knife = false
+		
+		await get_tree().create_timer(9).timeout
+		
+		can_move = true
+		can_be_tracked = true
+		can_knife = true
+		can_switch_weapon = false
+		can_action = true
+		
+		return
+	else:
+		world.game_over()
+		game_state = false
 
 var weapon_equipped: String = ""
 
@@ -140,6 +187,7 @@ class weapon_class extends Node2D:
 	var world: Node2D
 	var global_scope: Node2D
 	var shotgun: bool = false
+	var _dt_allowed: bool = true
 	var _reload_sound_path: String = ""
 	var _shot_sound_path: String = ""
 	var reload_sound: AudioStreamPlayer2D
@@ -152,7 +200,7 @@ class weapon_class extends Node2D:
 		reload_timer.one_shot = true
 		reload_timer.connect("timeout", Callable(self.finish_reload))
 	
-	func _init(max_bull: int, bullet_mag_size: int, bul_dam: float, bul_cd: float, reload_cd: float, bullet_volume: float, anim_name: String, reload_anim_name: String, player: AnimatedSprite2D, marker: Marker2D, shot_sound_path: String = "", reload_sound_path: String = "", is_shotgun: bool = false) -> void:
+	func _init(max_bull: int, bullet_mag_size: int, bul_dam: float, bul_cd: float, reload_cd: float, bullet_volume: float, anim_name: String, reload_anim_name: String, player: AnimatedSprite2D, marker: Marker2D, shot_sound_path: String = "", reload_sound_path: String = "", is_shotgun: bool = false, dt_allowed: bool = true) -> void:
 		marker_2d = marker
 		current_mag = bullet_mag_size
 		bullets_left = max_bull
@@ -166,6 +214,7 @@ class weapon_class extends Node2D:
 		max_bullet_mag = bullet_mag_size
 		player_sprite = player
 		shotgun = is_shotgun
+		_dt_allowed = dt_allowed
 		_reload_sound_path = reload_sound_path
 		_shot_sound_path = shot_sound_path
 		shot_vol = bullet_volume
@@ -251,27 +300,41 @@ class weapon_class extends Node2D:
 			shot_sound.queue_free()
 			return
 
+	func create_bullet(is_shotty: bool = false) -> void:
+		if is_shotty:
+			var bullet = bullet_scene.instantiate()
+			bullet.set_direction(player_sprite.rotation+deg_to_rad(randf_range(-10,10)), marker_2d.global_position)
+			bullet.damage = bullet_damage
+			world.add_child(bullet)
+			return
+		else:
+			var bullet = bullet_scene.instantiate()
+			bullet.set_direction(player_sprite.rotation, marker_2d.global_position)
+			bullet.damage = bullet_damage
+			world.add_child(bullet)
+
 	func shoot() -> void:
-		if current_mag > 0 and can_shoot:
+		if current_mag > 0:
+			if not can_shoot:
+				return
 			can_shoot = false
 			current_mag -= 1
 			create_shot(_shot_sound_path)
 			if shotgun:
 				for e in range(5):
-					var bullet = bullet_scene.instantiate()
-					bullet.set_direction(player_sprite.rotation+deg_to_rad(randf_range(-10,10)), marker_2d.global_position)
-					bullet.damage = bullet_damage
-					world.add_child(bullet)
+					create_bullet(true)
 			else:
-				var bullet = bullet_scene.instantiate()
-				bullet.set_direction(player_sprite.rotation, marker_2d.global_position)
-				bullet.damage = bullet_damage
-				world.add_child(bullet)
+				if global_scope.has_doubletap and _dt_allowed:
+					for e in range(2):
+						create_bullet()
+				else:
+					create_bullet()
+
 			await get_tree().create_timer(shot_cd).timeout
 			if not reloading:
 				can_shoot = true
 		else:
-			pass#Idk play some sound effect or summin
+			global_scope.empty_mag.play()
 
 var weapons: Dictionary = {}
 
@@ -281,36 +344,46 @@ var weapon_inventory: Array = [
 	
 ]
 
+func drink_action() -> void:
+	stop_current_action()
+	can_action = false
+	player_sprite.animation = "drink"
+	drink_perk.play()
+	can_switch_weapon = false
+
+func finish_drink_action(perk_name: String) -> void:
+	can_switch_weapon = true
+	can_action = true
+	if weapon_equipped:
+		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
+	else:
+		player_sprite.animation = "nogun"
+	var perkIcon = TextureRect.new()
+	perkIcon.texture = perk_icons[perk_name]
+	perkIcon.name = perk_name
+	perkIcon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	perkIcon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	perkIcon.custom_minimum_size = Vector2(54,54)
+	perk_container.call_deferred("add_child", perkIcon)
+
 func drink_quickrevive(price: int) -> void: # Bo2 perk icon, bo5 functionality :(
 	if not points >= price:
 		return
 		
 	if has_quickrevive:
 		return
-
-	stop_current_action()
+	
+	quick_revive_purchases += 1
+	drink_action()
 	points -= price
-	can_action = false
 	has_quickrevive = true
-	player_sprite.animation = "drink"
-	drink_perk.play()
-	can_switch_weapon = false
 	world.prompt_short_jingle("QuickRevive")
 	await get_tree().create_timer(3).timeout
-	can_switch_weapon = true
-	can_action = true
 	regenerate_timer.wait_time /= 2
-	if weapon_equipped:
-		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
-	else:
-		player_sprite.animation = "nogun"
-	var perkIcon = TextureRect.new()
-	perkIcon.texture = perk_icons["QuickRevive"]
-	perkIcon.name = "QuickRevive"
-	perkIcon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	perkIcon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	perkIcon.custom_minimum_size = Vector2(54,54)
-	perk_container.call_deferred("add_child", perkIcon)
+	finish_drink_action("QuickRevive")
+	
+	if quick_revive_purchases >= 3:
+		pass
 
 func drink_speedcola(price: int) -> void:
 	if not points >= price:
@@ -318,30 +391,14 @@ func drink_speedcola(price: int) -> void:
 		
 	if has_speedcola:
 		return
-
-	stop_current_action()
+		
+	drink_action()
 	points -= price
-	can_action = false
 	has_speedcola = true
-	player_sprite.animation = "drink"
-	drink_perk.play()
-	can_switch_weapon = false
 	world.prompt_short_jingle("SpeedCola")
 	await get_tree().create_timer(3).timeout
-	can_action = true
-	can_switch_weapon = true
-	if weapon_equipped:
-		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
-	else:
-		player_sprite.animation = "nogun"
 	reload_speed = .5
-	var perkIcon = TextureRect.new()
-	perkIcon.texture = perk_icons["SpeedCola"]
-	perkIcon.name = "SpeedCola"
-	perkIcon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	perkIcon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	perkIcon.custom_minimum_size = Vector2(54,54)
-	perk_container.call_deferred("add_child", perkIcon)
+	finish_drink_action("SpeedCola")
 
 func drink_juggernog(price: int) -> void:
 	if not points >= price:
@@ -350,33 +407,15 @@ func drink_juggernog(price: int) -> void:
 	if has_juggernog:
 		return
 
+	drink_action()
 	points -= price
 	stop_current_action()
-	can_action = false
-	weapons[weapon_equipped].can_shoot = false
 	has_juggernog = true
-	player_sprite.animation = "drink"
-	drink_perk.play()
-	can_switch_weapon = false
 	world.prompt_short_jingle("Juggernog")
 	await get_tree().create_timer(3).timeout
-	can_action = true
-	can_switch_weapon = true
-	weapons[weapon_equipped].can_shoot = true
-	if weapon_equipped:
-		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
-	else:
-		player_sprite.animation = "nogun"
 	max_health = 6
 	heart_3.visible = true
-	regenerate_timer.start()
-	var perkIcon = TextureRect.new()
-	perkIcon.texture = perk_icons["Juggernog"]
-	perkIcon.name = "Juggernog"
-	perkIcon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	perkIcon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	perkIcon.custom_minimum_size = Vector2(54,54)
-	perk_container.call_deferred("add_child", perkIcon)
+	finish_drink_action("Juggernog")
 
 func drink_staminup(price: int) -> void:
 	if not points >= price:
@@ -385,39 +424,34 @@ func drink_staminup(price: int) -> void:
 	if has_staminup:
 		return
 
+	drink_action()
 	points -= price
-	stop_current_action()
-	can_action = false
-	weapons[weapon_equipped].can_shoot = false
 	has_staminup = true
 	max_breath = 375.0
-	player_sprite.animation = "drink"
-	drink_perk.play()
-	can_switch_weapon = false
 	world.prompt_short_jingle("StaminUp")
 	await get_tree().create_timer(3).timeout
-	can_action = true
-	can_switch_weapon = true
-	weapons[weapon_equipped].can_shoot = true
-	if weapon_equipped:
-		player_sprite.animation = weapons[weapon_equipped].weapon_equipped_anim_name
-	else:
-		player_sprite.animation = "nogun"
-	regenerate_timer.start()
-	var perkIcon = TextureRect.new()
-	perkIcon.texture = perk_icons["StaminUp"]
-	perkIcon.name = "StaminUp"
-	perkIcon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	perkIcon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	perkIcon.custom_minimum_size = Vector2(54,54)
-	perk_container.call_deferred("add_child", perkIcon)
+	finish_drink_action("StaminUp")
+
+func drink_doubletap(price: int) -> void:
+	if not points >= price:
+		return
+		
+	if has_doubletap:
+		return
+		
+	drink_action()
+	points -= price
+	has_doubletap = true
+	world.prompt_short_jingle("DoubleTap")
+	await get_tree().create_timer(3).timeout
+	finish_drink_action("DoubleTap")
 
 var perks: Dictionary = {
 	"Juggernog" : [2500, "Purchase [color=red]Juggernog[/color] cola for [color=yellow]2500 points[/color]", Callable(drink_juggernog)], #Price, text, func
 	"QuickRevive" : [500, "Purchase [color=lightblue]Quick revive[/color] for [color=yellow]500 points[/color]", Callable(drink_quickrevive)],
 	"SpeedCola" : [4000, "Purchase [color=green]Speed cola[/color] for [color=yellow]4000 points[/color]", Callable(drink_speedcola)],
-	"StaminUp" : [2000, "Purchase [color=yellow]Stamin-up[/color] for [color=yellow]2000 points[/color]", Callable(drink_staminup)]
-
+	"StaminUp" : [2000, "Purchase [color=yellow]Stamin-up[/color] for [color=yellow]2000 points[/color]", Callable(drink_staminup)],
+	"DoubleTap" : [2000, "Purchase [color=orange]Double Tap II[/color] for [color=yellow]2000 points[/color]", Callable(drink_doubletap)]
 }
 
 var valid_perks: Array
@@ -505,8 +539,8 @@ func health_state(a: int, b: int, c: int) -> void:
 	heart_3.texture = heart_states[c]
 
 func _ready() -> void:
-	var pistol: weapon_class = weapon_class.new(81, 9, 1.0, .4, 1.76,0, "pistol", "pistol_reload", player_sprite, marker_2d, "res://Assets/GunSounds/1911/shot.mp3", "res://Assets/GunSounds/1911/reload.mp3")
-	var olympia: weapon_class = weapon_class.new(28, 2 , 2.1, .3, 2.3,0, "olympia", "olympia_reload", player_sprite, marker_2d, "res://Assets/GunSounds/Olympia/shot.mp3", "res://Assets/GunSounds/Olympia/reload.mp3", true)
+	var pistol: weapon_class = weapon_class.new(81, 9, 1.0, .4, 1.76,0, "pistol", "pistol_reload", player_sprite, marker_2d, "res://Assets/GunSounds/1911/shot.mp3", "res://Assets/GunSounds/1911/reload.mp3", false, false)
+	var olympia: weapon_class = weapon_class.new(28, 2 , 2.1, .3, 2.3,0, "olympia", "olympia_reload", player_sprite, marker_2d, "res://Assets/GunSounds/Olympia/shot.mp3", "res://Assets/GunSounds/Olympia/reload.mp3", true, false)
 	var ak47: weapon_class = weapon_class.new(240, 30, 3, .09, 3.8, -16.0, "ak", "ak_reload", player_sprite, ak_marker, "res://Assets/GunSounds/ak/shot.mp3","res://Assets/GunSounds/ak/reload.mp3",false)
 	add_child(pistol)
 	add_child(olympia)

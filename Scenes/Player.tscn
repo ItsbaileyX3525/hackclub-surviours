@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://boc7x50bdow6d"]
+[gd_scene load_steps=27 format=3 uid="uid://boc7x50bdow6d"]
 
 [ext_resource type="Script" uid="uid://b80lwq8sw2jhi" path="res://Scripts/Player.gd" id="1_kyqiw"]
 [ext_resource type="Texture2D" uid="uid://diin0v31jpb4u" path="res://Assets/Charcter/survivor1_stand.png" id="1_rpqav"]
@@ -17,6 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://vsj3wvojtrgu" path="res://Assets/Charcter/shotgun/olympiaReload.png" id="8_glx4g"]
 [ext_resource type="AudioStream" uid="uid://1opm2312m42d" path="res://Assets/perks/drink.mp3" id="9_megsn"]
 [ext_resource type="Texture2D" uid="uid://74x6iji5wbrc" path="res://Assets/Charcter/slash.png" id="13_o3h8g"]
+[ext_resource type="AudioStream" uid="uid://dqd5ouituoium" path="res://Assets/GunSounds/empty.mp3" id="18_ulo2v"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_kyqiw"]
 animations = [{
@@ -526,6 +527,9 @@ one_shot = true
 [node name="DoublePointsTimer" type="Timer" parent="."]
 wait_time = 25.0
 one_shot = true
+
+[node name="EmptyMag" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("18_ulo2v")
 
 [connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
 [connection signal="timeout" from="RegenerateTimer" to="." method="_on_regenerate_timer_timeout"]

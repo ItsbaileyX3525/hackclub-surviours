@@ -1,6 +1,7 @@
 extends CharacterBody2D
 @onready var agent: NavigationAgent2D = $NavigationAgent2D
 @onready var player: CharacterBody2D = get_node("/root/World/TileMapLayer/Player")
+@onready var roam_locations: Node2D = get_node("/root/World/ZombieRoams")
 @onready var zombie_sprite: Sprite2D = $ZombieSprite
 @onready var atk_timer: Timer = $AtkCD
 @onready var groan_timer: Timer = $groan
@@ -60,7 +61,7 @@ var is_ready: bool = false
 var is_dead: bool = false
 var stop_tracking: bool = false
 var max_health: float
-
+var my_roam_location: Vector2
 
 func sprint() -> void:
 	sprint_sound.stream = sprint_sounds[randi_range(0,8)]
@@ -76,6 +77,12 @@ func _ready() -> void:
 	agent.target_position = player.global_position
 	zombie_sprite.texture = skins[randi_range(0,5)]
 	hitpoints = floor(hitpoints * health_modifier)
+	
+	var valid_locations: Array[Vector2] = []
+	for e in roam_locations.get_children():
+		valid_locations.append(e.global_position)
+	
+	my_roam_location = valid_locations.pick_random()
 
 	if last_zombie:
 		agent.max_speed *= 1.3
@@ -85,14 +92,13 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
-
-	agent.target_position = player.global_position
+		
 	var distance = (player.global_position - global_position).length()
 
 	if stop_tracking:
 		return
 
-	if distance <= 45:
+	if distance <= 45 and player.can_be_tracked:
 		if can_atk:
 			can_atk = false
 			atk_timer.start()
@@ -100,6 +106,12 @@ func _physics_process(delta: float) -> void:
 			attack_sound.play()
 			player.take_hit(1)
 	else:
+		if player.can_be_tracked:
+			agent.target_position = player.global_position
+		else:
+			atk_timer.stop()
+			agent.target_position = my_roam_location
+
 		var next_point = agent.get_next_path_position()
 		var direction = (next_point - global_transform.origin).normalized()
 		var target_rotation = direction.angle()

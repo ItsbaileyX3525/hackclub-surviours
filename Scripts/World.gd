@@ -11,6 +11,9 @@ extends Node2D
 @onready var SC_Jingle_short: AudioStreamPlayer2D = $Perks/SpeedCola/Jingle2
 @onready var SU_jingle: AudioStreamPlayer2D = $Perks/StaminUp/Jingle
 @onready var SU_jingle_short: AudioStreamPlayer2D = $Perks/StaminUp/Jingle2
+@onready var DP_jingle: AudioStreamPlayer2D = $Perks/DoubleTap/Jingle
+@onready var DP_jingle_short: AudioStreamPlayer2D = $Perks/DoubleTap/Jingle2
+
 @onready var box: Area2D = $TileMapLayer/MysteryBox/Box
 @onready var round_flip: AudioStreamPlayer = $RoundFlip
 @onready var round_flip_short: AudioStreamPlayer = $RoundFlipShort
@@ -307,6 +310,12 @@ func game_over() -> void:
 	player.death()
 	spawner.stop()
 
+func remove_quick_revive() -> void:
+	var quick_revive = $Perks/QuickRevive
+	quick_revive.visible = false
+	quick_revive.disconnect("body_entered", Callable(_on_quick_revive_entered))
+	box_move.play()
+
 func prompt_short_jingle(perk: String) -> void:
 	match perk:
 		"QuickRevive":
@@ -317,6 +326,8 @@ func prompt_short_jingle(perk: String) -> void:
 			J_Jingle_short.play()
 		"StaminUp":
 			SU_jingle_short.play()
+		"DoubleTap":
+			DP_jingle_short.play()
 
 func buy_box() -> void:
 	if player.points < 950:
@@ -405,6 +416,11 @@ func _on_su_jingle_body_entered(body: Node2D) -> void:
 		if randi_range(0, 6) == 5 and not SU_jingle.playing:
 			SU_jingle.play()
 
+func _on_dp_jingle_body_entered(body: Node2D) -> void:
+	if body.name == "Player":
+		if randi_range(0, 6) == 5 and not DP_jingle.playing:
+			DP_jingle.play()
+
 func _on_speed_cola_entered(body: Node2D) -> void:
 	if body.name == "Player": body.prompt_perk("SpeedCola")
 
@@ -417,6 +433,11 @@ func _on_stamin_up_body_entered(body: Node2D) -> void:
 func _on_stamin_up_body_exited(body: Node2D) -> void:
 	if body.name == "Player": body.remove_prompt()
 
+func _on_double_tap_body_entered(body: Node2D) -> void:
+	if body.name == "Player": body.prompt_perk("DoubleTap")
+
+func _on_double_tap_body_exited(body: Node2D) -> void:
+	if body.name == "Player": body.remove_prompt()
 
 func _on_box_body_entered(body: Node2D) -> void:
 	if body.name == "Player": 

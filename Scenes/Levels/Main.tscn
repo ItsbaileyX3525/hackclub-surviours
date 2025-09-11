@@ -1,4 +1,4 @@
-[gd_scene load_steps=50 format=4 uid="uid://dnyh0h7euo111"]
+[gd_scene load_steps=53 format=4 uid="uid://dnyh0h7euo111"]
 
 [ext_resource type="Script" uid="uid://ew0lt3ur3l3b" path="res://Scripts/World.gd" id="1_07780"]
 [ext_resource type="Texture2D" uid="uid://b18fojo0hkp84" path="res://Assets/Tiles/tilesheet_complete.png" id="1_a113d"]
@@ -17,7 +17,10 @@
 [ext_resource type="AudioStream" uid="uid://r2e4o1xtl7x" path="res://Assets/perks/Speedcola/Speed_Cola_Jingle_WaW.ogg" id="9_4ih0k"]
 [ext_resource type="AudioStream" uid="uid://gg6itceataj2" path="res://Assets/perks/QuickRevive/QuickReviveJingleShort.mp3" id="9_dm2qe"]
 [ext_resource type="AudioStream" uid="uid://b0ts87ukltp7r" path="res://Assets/Sounds/game-over-v2-0.mp3" id="11_4ih0k"]
+[ext_resource type="Texture2D" uid="uid://clccx1ns4cxau" path="res://Assets/perks/DoubleTap/DoubleTap.png" id="11_fmii4"]
+[ext_resource type="AudioStream" uid="uid://4hmevmxul8j3" path="res://Assets/perks/DoubleTap/Double_Tap_Root_Beer_Jingle_WaW.ogg" id="12_0uald"]
 [ext_resource type="AudioStream" uid="uid://c1hf1c0qfalxv" path="res://Assets/perks/Speedcola/Speed_Cola_Jingle_WaWShort.ogg" id="12_t65c0"]
+[ext_resource type="AudioStream" uid="uid://xr2iq1r0chww" path="res://Assets/perks/DoubleTap/Double_Tap_Root_Beer_Jingle_WaWShort.ogg" id="13_5poa3"]
 [ext_resource type="Texture2D" uid="uid://bnajf358cguik" path="res://Assets/perks/Staminup/staminup.png" id="16_f502e"]
 [ext_resource type="AudioStream" uid="uid://bwdk4682qhh3t" path="res://Assets/Sounds/RoundFlip.mp3" id="16_t65c0"]
 [ext_resource type="AudioStream" uid="uid://b0i4nuqwgwkp5" path="res://Assets/perks/Staminup/Stamin-Up_Jingle_BOII.ogg" id="17_l8plj"]
@@ -7866,6 +7869,42 @@ attenuation = 0.574349
 position = Vector2(26, 10.5001)
 shape = SubResource("RectangleShape2D_nl3m6")
 
+[node name="DoubleTap" type="Area2D" parent="Perks"]
+position = Vector2(969, 848)
+rotation = -3.14159
+
+[node name="DoubleTap" type="Sprite2D" parent="Perks/DoubleTap"]
+position = Vector2(3.39279, 2.12877e-05)
+rotation = -1.57079
+scale = Vector2(0.189553, 0.175955)
+texture = ExtResource("11_fmii4")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Perks/DoubleTap"]
+position = Vector2(60.5, -3.5)
+shape = SubResource("RectangleShape2D_oi5um")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Perks/DoubleTap"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Perks/DoubleTap/StaticBody2D"]
+position = Vector2(35.5, 0.5)
+shape = SubResource("RectangleShape2D_saai4")
+
+[node name="Jingle" type="AudioStreamPlayer2D" parent="Perks/DoubleTap"]
+stream = ExtResource("12_0uald")
+max_distance = 327.0
+attenuation = 0.574349
+
+[node name="Jingle2" type="AudioStreamPlayer2D" parent="Perks/DoubleTap"]
+stream = ExtResource("13_5poa3")
+max_distance = 327.0
+attenuation = 0.574349
+
+[node name="DPJingle" type="Area2D" parent="Perks/DoubleTap"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Perks/DoubleTap/DPJingle"]
+position = Vector2(26, 10.5001)
+shape = SubResource("RectangleShape2D_nl3m6")
+
 [node name="QuickRevive" type="Area2D" parent="Perks"]
 position = Vector2(161, 606)
 rotation = 1.57079
@@ -8156,11 +8195,31 @@ one_shot = true
 wait_time = 8.0
 one_shot = true
 
+[node name="ZombieRoams" type="Node2D" parent="."]
+
+[node name="Marker2D" type="Marker2D" parent="ZombieRoams"]
+position = Vector2(840, 332)
+
+[node name="Marker2D2" type="Marker2D" parent="ZombieRoams"]
+position = Vector2(-591, 1989)
+
+[node name="Marker2D3" type="Marker2D" parent="ZombieRoams"]
+position = Vector2(1232, 2044)
+
+[node name="Marker2D4" type="Marker2D" parent="ZombieRoams"]
+position = Vector2(-817, 14)
+
+[node name="Marker2D5" type="Marker2D" parent="ZombieRoams"]
+position = Vector2(204, 1054)
+
 [connection signal="body_entered" from="TileMapLayer/MysteryBox/Box" to="." method="_on_box_body_entered"]
 [connection signal="body_exited" from="TileMapLayer/MysteryBox/Box" to="." method="_on_box_body_exited"]
 [connection signal="body_entered" from="Perks/Juggernog" to="." method="_on_juggernog_entered"]
 [connection signal="body_exited" from="Perks/Juggernog" to="." method="_on_juggernog_exited"]
 [connection signal="body_entered" from="Perks/Juggernog/JJingleRadius" to="." method="_on_j_jingle_radius_entered"]
+[connection signal="body_entered" from="Perks/DoubleTap" to="." method="_on_double_tap_body_entered"]
+[connection signal="body_exited" from="Perks/DoubleTap" to="." method="_on_double_tap_body_exited"]
+[connection signal="body_entered" from="Perks/DoubleTap/DPJingle" to="." method="_on_dp_jingle_body_entered"]
 [connection signal="body_entered" from="Perks/QuickRevive" to="." method="_on_quick_revive_entered"]
 [connection signal="body_exited" from="Perks/QuickRevive" to="." method="_on_quick_revive_exited"]
 [connection signal="body_entered" from="Perks/QuickRevive/QRJingleRadius" to="." method="_on_qr_jingle_radius_entered"]
