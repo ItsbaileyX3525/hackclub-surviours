@@ -129,13 +129,15 @@ func activate_instakill() -> void:
 func deactivate_instakill() -> void:
 	hitpoints = max_health
 
-func take_damage(dam: float) -> void:
+func take_damage(dam: float, dam_type: String = "bullet") -> void:
 	if is_dead: return
 	hitpoints -= dam
 	if hitpoints <= 0:
 		is_dead = true
-		emit_signal("death", "basic", global_position)
+		emit_signal("death", "basic", dam_type, global_position)
 		call_deferred("queue_free")
+		return
+	player.add_points(10)
 
 func _on_groan_timeout() -> void:
 	var rng = randi_range(0,4)

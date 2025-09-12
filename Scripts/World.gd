@@ -13,6 +13,7 @@ extends Node2D
 @onready var SU_jingle_short: AudioStreamPlayer2D = $Perks/StaminUp/Jingle2
 @onready var DP_jingle: AudioStreamPlayer2D = $Perks/DoubleTap/Jingle
 @onready var DP_jingle_short: AudioStreamPlayer2D = $Perks/DoubleTap/Jingle2
+@onready var box_open: Node2D = $TileMapLayer/MysteryBox/Box/BoxOpen
 
 @onready var box: Area2D = $TileMapLayer/MysteryBox/Box
 @onready var round_flip: AudioStreamPlayer = $RoundFlip
@@ -155,7 +156,7 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			for e in zombies.get_children():
 				e.take_damage(9999999999999.0)
 			await get_tree().create_timer(3).timeout
-			player.points += 400
+			player.add_points(400)
 
 func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 	var powerup_rng = randi_range(0,3)
@@ -217,14 +218,17 @@ func spawn_powerup(positioning: Vector2, _specific: String = "") -> void:
 			kaboom_sprite.call_deferred("add_child", kaboom_area)
 			powerups.call_deferred("add_child", kaboom_sprite)
 
-func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
+func zombie_death(zombie_type: String, death_from: String, zm_position: Vector2) -> void:
 	player.increment_kills()
 	var multi = 1
 	if double_points_active:
 		multi = 2
 	match zombie_type:
 		"basic":
-			player.points += 100 * multi
+			if death_from == "bullet":
+				player.add_points(80 * multi)
+			elif death_from == "knife":
+				player.add_points(130 * multi)
 
 	var powerup_rng = randi_range(1,40)
 	if powerup_rng == 40:
@@ -247,6 +251,13 @@ func zombie_death(zombie_type: String, zm_position: Vector2) -> void:
 func new_round() -> void:
 	wave += 1
 	player.update_round(wave)
+	
+	# Show difficulty progression messages to player
+	if wave == 11:
+		print("Round 11: Zombies are getting much stronger!")
+	elif wave == 6:
+		print("Round 6: Zombies are tougher now...")
+	
 	if not round_flip_short.playing:
 		round_flip.play()
 	await get_tree().create_timer(spawn_timer).timeout
@@ -266,7 +277,21 @@ func start_round() -> void:
 	default_zombies_per_round = min(60, floor(default_zombies_per_round * 1.2))
 	zombies_to_spawn = default_zombies_per_round
 
-	zombie_health_modifier += 1.01
+	# New scaling system - more balanced progression
+	# Rounds 1-5: Gradual increase (1.0 -> 2.5)
+	# Rounds 6-10: Moderate increase (2.5 -> 5.0) 
+	# Round 11+: Significant increase (weapons start feeling weak)
+	if wave <= 5:
+		zombie_health_modifier = 1.0 + (wave - 1) * 0.3  # Linear growth early
+	elif wave <= 10:
+		zombie_health_modifier = 2.5 + (wave - 5) * 0.5  # Moderate growth mid-game
+	else:
+		# Exponential growth for late game - weapons become noticeably weak
+		zombie_health_modifier = 5.0 + pow(wave - 10, 1.3) * 0.8
+
+	# Debug output for health scaling (remove this later if not needed)
+	var zombie_hp = floor(4.0 * zombie_health_modifier)
+	print("Round ", wave, ": Zombie HP = ", zombie_hp, " (modifier: ", zombie_health_modifier, ")")
 
 	zombies_alive = 0
 
@@ -334,14 +359,15 @@ func buy_box() -> void:
 		#Fail noise maybe?
 		return
 	
-	player.points -= 950
+	box_open.visible = true
+	player.remove_points(950)
 	can_prompt_box = false
 	current_box_iteration += 1
 	mystery_spin.play()
 	await get_tree().create_timer(6.0).timeout
 	if current_box_iteration >= box_spins_till_move:
 		#Play movement animation or whatnot
-		player.points += 950
+		player.add_points(950)
 		box_move.play()
 		await get_tree().create_timer(5.5).timeout
 		box.visible = false
@@ -349,6 +375,8 @@ func buy_box() -> void:
 		await get_tree().create_timer(1.5).timeout
 		box.visible = true 
 		load_box_location()
+		box_open.visible = false
+		return
 	
 	box_has_weapon = true
 	var valid_guns: Array
@@ -358,7 +386,8 @@ func buy_box() -> void:
 		valid_guns.erase(e)
 	var random_gun = randi_range(0, len(valid_guns) - 1)
 	gun_to_spawn = valid_guns[random_gun]
-	player.prompt_box_gun(gun_to_spawn)
+	if in_mystery_box_area:
+		player.prompt_box_gun(gun_to_spawn)
 	box_finish.start()
 
 func taken_weapon() -> void:
@@ -367,12 +396,14 @@ func taken_weapon() -> void:
 	box_has_weapon = false
 	can_prompt_box = true
 	player.remove_prompt_gun()
+	box_open.visible = false
 
 func _on_box_finish_timeout() -> void:
 	player.remove_prompt_gun()
 	box_has_weapon = false
 	gun_to_spawn = ""
 	can_prompt_box = true
+	box_open.visible = false
 	if in_mystery_box_area:
 		player.prompt_box()
 

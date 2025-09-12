@@ -305,6 +305,17 @@ theme_override_font_sizes/font_size = 26
 text = "500"
 horizontal_alignment = 2
 
+[node name="AddPointsLabel" type="Label" parent="Camera2D/CanvasLayer/Control/Points"]
+visible = false
+layout_mode = 0
+offset_left = 1136.0
+offset_top = 604.0
+offset_right = 1182.0
+offset_bottom = 640.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_font_sizes/font_size = 25
+text = "+ 10"
+
 [node name="Perks" type="Control" parent="Camera2D/CanvasLayer/Control"]
 anchors_preset = 0
 offset_left = 94.0
@@ -531,5 +542,9 @@ one_shot = true
 [node name="EmptyMag" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("18_ulo2v")
 
+[node name="pointTimer" type="Timer" parent="."]
+wait_time = 0.7
+
 [connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
 [connection signal="timeout" from="RegenerateTimer" to="." method="_on_regenerate_timer_timeout"]
+[connection signal="timeout" from="pointTimer" to="." method="_on_point_timer_timeout"]

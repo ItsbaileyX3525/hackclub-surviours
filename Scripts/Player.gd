@@ -16,6 +16,8 @@ extends CharacterBody2D
 @onready var perk_container: HBoxContainer = $Camera2D/CanvasLayer/Control/Round/MarginContainer/HBoxContainer/Perks/PerkContainer
 @onready var drink_perk: AudioStreamPlayer2D = $DrinkPerk
 @onready var ak_marker: Marker2D = $PlayerSprite/akMarker
+@onready var point_timer: Timer = $pointTimer
+@onready var add_points_label: Label = $Camera2D/CanvasLayer/Control/Points/AddPointsLabel
 var world: Node2D
 @onready var game_over: Control = $Camera2D/CanvasLayer/Control/GameOver
 @onready var knife_anim: AnimationPlayer = $PlayerSprite/KnifeArea/Sprite2D/AnimationPlayer
@@ -375,7 +377,7 @@ func drink_quickrevive(price: int) -> void: # Bo2 perk icon, bo5 functionality :
 	
 	quick_revive_purchases += 1
 	drink_action()
-	points -= price
+	remove_points(price)
 	has_quickrevive = true
 	world.prompt_short_jingle("QuickRevive")
 	await get_tree().create_timer(3).timeout
@@ -393,7 +395,7 @@ func drink_speedcola(price: int) -> void:
 		return
 		
 	drink_action()
-	points -= price
+	remove_points(price)
 	has_speedcola = true
 	world.prompt_short_jingle("SpeedCola")
 	await get_tree().create_timer(3).timeout
@@ -408,7 +410,7 @@ func drink_juggernog(price: int) -> void:
 		return
 
 	drink_action()
-	points -= price
+	remove_points(price)
 	stop_current_action()
 	has_juggernog = true
 	world.prompt_short_jingle("Juggernog")
@@ -425,7 +427,7 @@ func drink_staminup(price: int) -> void:
 		return
 
 	drink_action()
-	points -= price
+	remove_points(price)
 	has_staminup = true
 	max_breath = 375.0
 	world.prompt_short_jingle("StaminUp")
@@ -440,7 +442,7 @@ func drink_doubletap(price: int) -> void:
 		return
 		
 	drink_action()
-	points -= price
+	remove_points(price)
 	has_doubletap = true
 	world.prompt_short_jingle("DoubleTap")
 	await get_tree().create_timer(3).timeout
@@ -538,6 +540,20 @@ func health_state(a: int, b: int, c: int) -> void:
 	heart_2.texture = heart_states[b]
 	heart_3.texture = heart_states[c]
 
+func add_points(points_to_add: int) -> void:
+	points += points_to_add
+	add_points_label.add_theme_color_override("font_color", Color(1, 1, 0))
+	add_points_label.text = "+" + str(points_to_add)
+	add_points_label.visible = true
+	
+	point_timer.start()
+
+func remove_points(points_to_remove: int) -> void:
+	points -= points_to_remove
+	add_points_label.add_theme_color_override("font_color", Color(1, 0, 0))
+	add_points_label.text = "-" + str(points_to_remove)
+	add_points_label.visible = true
+
 func _ready() -> void:
 	var pistol: weapon_class = weapon_class.new(81, 9, 1.0, .4, 1.76,0, "pistol", "pistol_reload", player_sprite, marker_2d, "res://Assets/GunSounds/1911/shot.mp3", "res://Assets/GunSounds/1911/reload.mp3", false, false)
 	var olympia: weapon_class = weapon_class.new(28, 2 , 2.1, .3, 2.3,0, "olympia", "olympia_reload", player_sprite, marker_2d, "res://Assets/GunSounds/Olympia/shot.mp3", "res://Assets/GunSounds/Olympia/reload.mp3", true, false)
@@ -616,7 +632,7 @@ func _physics_process(delta: float) -> void:
 		knife_anim.play("slash")
 		for e in knife_area.get_overlapping_bodies():
 			if e.name.begins_with("Zombie"):
-				e.take_damage(10)
+				e.take_damage(10, "knife")
 				break #Only one zombie 
 		await knife_anim.animation_finished
 		can_knife = true
@@ -662,10 +678,12 @@ func _physics_process(delta: float) -> void:
 		switch_weapon(false)
 		
 	if Input.is_action_just_pressed("cheat"):
+		return
 		points += 1000
 		add_weapon_to_inventory("ak47")
 
 	if Input.is_action_just_pressed("cheat2"):
+		return
 		remove_weapon()
 
 func take_hit(damange: int) -> void:
@@ -739,6 +757,8 @@ func death() -> void:
 	$Camera2D/CanvasLayer/Control/GameOver/HBoxContainer/Label.text = "USERNAME | SCORE | KILLS
 YOU | %s | %s" % [points, kills]
 
-
 func _on_quit_pressed() -> void:
 	get_tree().quit()
+
+func _on_point_timer_timeout() -> void:
+	add_points_label.visible = false
