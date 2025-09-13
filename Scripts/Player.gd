@@ -696,7 +696,7 @@ func remove_weapon() -> void:
 	var weapon_to_remove: int = weapon_inventory_index
 	switch_weapon()
 	if len(weapon_inventory) > 1:
-		weapons[weapon_equipped].fill_ammo
+		weapons[weapon_equipped].fill_ammo()
 		weapon_inventory.remove_at(weapon_to_remove)
 	else:
 		weapons[weapon_equipped].unequip()
