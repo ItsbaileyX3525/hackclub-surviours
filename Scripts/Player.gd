@@ -292,28 +292,20 @@ class weapon_class extends Node2D:
 
 	func create_shot(path: String) -> void:
 		if path:
-			var shot_sound = AudioStreamPlayer2D.new()
-			shot_sound.stream = load(path)
-			add_child(shot_sound)
-			shot_sound.volume_db = shot_vol
-			shot_sound.pitch_scale = randf_range(.85,1.25)
-			shot_sound.play()
-			await shot_sound.finished
-			shot_sound.queue_free()
+			# Use global audio pool instead of creating new nodes
+			world.play_weapon_sound(path, shot_vol)
 			return
 
 	func create_bullet(is_shotty: bool = false) -> void:
 		if is_shotty:
-			var bullet = bullet_scene.instantiate()
+			var bullet = world.get_bullet_from_pool()
 			bullet.set_direction(player_sprite.rotation+deg_to_rad(randf_range(-10,10)), marker_2d.global_position)
 			bullet.damage = bullet_damage
-			world.add_child(bullet)
 			return
 		else:
-			var bullet = bullet_scene.instantiate()
+			var bullet = world.get_bullet_from_pool()
 			bullet.set_direction(player_sprite.rotation, marker_2d.global_position)
 			bullet.damage = bullet_damage
-			world.add_child(bullet)
 
 	func shoot() -> void:
 		if current_mag > 0:
@@ -571,11 +563,18 @@ func _ready() -> void:
 	world = get_tree().get_first_node_in_group("world")
 
 func _physics_process(delta: float) -> void:
-	score.text = str(points)
+	# Only update UI when values actually change to reduce string operations
+	if score.text != str(points):
+		score.text = str(points)
+	
+	var current_bullets_text: String
 	if weapon_equipped:
-		bullets_left.text = "%s / %s" % [weapons[weapon_equipped].current_mag, weapons[weapon_equipped].bullets_left]
+		current_bullets_text = "%s / %s" % [weapons[weapon_equipped].current_mag, weapons[weapon_equipped].bullets_left]
 	else:
-		bullets_left.text = "0 / 0"
+		current_bullets_text = "0 / 0"
+	
+	if bullets_left.text != current_bullets_text:
+		bullets_left.text = current_bullets_text
 	
 	if double_points.visible:
 		double_points_remain.text = str(ceili(double_points_timer.time_left))

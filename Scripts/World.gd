@@ -80,6 +80,16 @@ var double_points_active: bool = false
 
 #Attempt to fix performance issues on web
 
+# Audio pooling system to prevent constant AudioStreamPlayer creation
+var audio_pool: Array[AudioStreamPlayer2D] = []
+var audio_pool_size: int = 10
+var audio_pool_index: int = 0
+
+# Bullet pooling system
+var bullet_pool: Array[Area2D] = []
+var bullet_pool_size: int = 50
+var active_bullets: Array[Area2D] = []
+
 #Pooling of some sort, I dont exactly understand it
 var zombie_pool: Array[Node2D] = []
 var active_zombies: Array[Node2D] = []
@@ -88,7 +98,91 @@ var zombie_pool_initialized: bool = false
 
 func _ready() -> void:
 	create_zombie_pool()
+	create_audio_pool()
+	create_bullet_pool()
 	load_box_location()
+
+# Create audio pool for better performance
+func create_audio_pool() -> void:
+	for i in audio_pool_size:
+		var audio_player = AudioStreamPlayer2D.new()
+		audio_player.name = "PooledAudio" + str(i)
+		audio_player.position = player.position
+		add_child(audio_player)
+		audio_pool.append(audio_player)
+
+# Create bullet pool for better performance
+func create_bullet_pool() -> void:
+	var bullet_scene: PackedScene = preload("res://Scenes/Bullet.tscn")
+	
+	for i in bullet_pool_size:
+		var bullet = bullet_scene.instantiate()
+		bullet.name = "PooledBullet" + str(i)
+		bullet.visible = false
+		bullet.set_physics_process(false)
+		bullet.monitoring = false
+		add_child(bullet)
+		bullet_pool.append(bullet)
+
+# Get audio player from pool
+func play_weapon_sound(sound_path: String, volume: float) -> void:
+	var audio_player = audio_pool[audio_pool_index]
+	audio_pool_index = (audio_pool_index + 1) % audio_pool_size
+	
+	audio_player.stream = load(sound_path)
+	audio_player.volume_db = volume
+	audio_player.pitch_scale = randf_range(0.85, 1.25)
+	audio_player.position = player.position
+	audio_player.play()
+
+# Get bullet from pool
+func get_bullet_from_pool() -> Area2D:
+	var bullet: Area2D
+	
+	# Clean up any invalid bullets in the pool first
+	for i in range(bullet_pool.size() - 1, -1, -1):
+		if not is_instance_valid(bullet_pool[i]):
+			bullet_pool.remove_at(i)
+	
+	if bullet_pool.is_empty():
+		# Fallback: create new bullet if pool exhausted
+		var bullet_scene: PackedScene = preload("res://Scenes/Bullet.tscn")
+		bullet = bullet_scene.instantiate()
+		add_child(bullet)
+	else:
+		bullet = bullet_pool.pop_back()
+		active_bullets.append(bullet)
+		
+	# Activate bullet
+	bullet.visible = true
+	bullet.set_physics_process(true)
+	bullet.monitoring = true
+	
+	return bullet
+
+# Return bullet to pool
+func return_bullet_to_pool(bullet: Area2D) -> void:
+	if not is_instance_valid(bullet):
+		return
+	
+	# Clean invalid bullets from active list
+	for i in range(active_bullets.size() - 1, -1, -1):
+		if not is_instance_valid(active_bullets[i]):
+			active_bullets.remove_at(i)
+		elif active_bullets[i] == bullet:
+			active_bullets.remove_at(i)
+			break
+	
+	# Deactivate bullet safely
+	bullet.set_deferred("visible", false)
+	bullet.set_deferred("monitoring", false)
+	bullet.set_physics_process(false)
+	
+	# Return to pool if space available
+	if bullet_pool.size() < bullet_pool_size:
+		bullet_pool.append(bullet)
+	else:
+		bullet.call_deferred("queue_free")
 
 func create_zombie_pool() -> void:
 	print("Creating zombie pool with ", pool_size, " zombies...")
@@ -286,46 +380,26 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 	match powerup:
 		"maxblammo":
 			player.max_ammo()
-			var max_ammo: AudioStreamPlayer = AudioStreamPlayer.new()
-			max_ammo.stream = MAX_BLAMMO
-			add_child(max_ammo)
-			max_ammo.play()
+			play_weapon_sound("res://Assets/Sounds/powerups/MaxBlammo.mp3", 0.0)
 			powerup_node.call_deferred("queue_free")
-			await get_tree().create_timer(2.95).timeout
-			max_ammo.call_deferred("queue_free")
 		"instakill":
 			for zombie in active_zombies:
 				if zombie and zombie.visible:
 					zombie.activate_instakill()
 			instakill_active = true
-			var instakill: AudioStreamPlayer = AudioStreamPlayer.new()
-			instakill.stream = INSTAKILL
-			add_child(instakill)
-			instakill.play()
+			play_weapon_sound("res://Assets/Sounds/powerups/Instakill.mp3", 0.0)
 			player.display_powerup("Instakill")
 			powerup_node.call_deferred("queue_free")
 			instakill_timer.start()
-			await get_tree().create_timer(2.74).timeout
-			instakill.call_deferred("queue_free")
 		"doublepoints":
 			double_points_active = true
-			var double_points: AudioStreamPlayer = AudioStreamPlayer.new()
-			double_points.stream = DOUBLE_POINTS
-			add_child(double_points)
+			play_weapon_sound("res://Assets/Sounds/powerups/DoubePoints.mp3", 0.0)
 			player.display_powerup("DoublePoints")
-			double_points.play()
 			powerup_node.call_deferred("queue_free")
 			double_points_timer.start()
-			await get_tree().create_timer(2.17).timeout
-			double_points.call_deferred("queue_free")
 		"kaboom":
-			var kaboom: AudioStreamPlayer = AudioStreamPlayer.new()
-			kaboom.stream = KABOOM
-			add_child(kaboom)
-			kaboom.play()
+			play_weapon_sound("res://Assets/Sounds/powerups/kaboom.mp3", 0.0)
 			powerup_node.call_deferred("queue_free")
-			await get_tree().create_timer(2.71).timeout
-			kaboom.call_deferred("queue_free")
 			for zombie in active_zombies:
 				if zombie and zombie.visible:
 					zombie.take_damage(9999999999999.0)
@@ -687,8 +761,8 @@ func adjust_pool_size(new_size: int) -> void:
 		var excess = pool_size - new_size
 		for i in excess:
 			if not zombie_pool.is_empty():
-				var zombie = zombie_pool.pop_back()
-				zombie.queue_free()
+				var _zombie = zombie_pool.pop_back()
+				_zombie.queue_free()
 	elif new_size > pool_size:
 		# Grow pool
 		var additional = new_size - pool_size
