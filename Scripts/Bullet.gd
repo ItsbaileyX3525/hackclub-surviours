@@ -23,8 +23,13 @@ func set_direction(direction: float, start_position: Vector2) -> void:
 	velocity = Vector2.RIGHT.rotated(direction) * speed
 
 func _on_body_entered(body: Node2D) -> void:
-	if body.name.begins_with("Zombie"):
+	if body.has_method("take_damage"):
 		body.take_damage(damage)
+		queue_free()
+		return
+	
 	if body.name == "Player":
 		return
+	
+	# Destroy bullet on any other collision
 	queue_free()

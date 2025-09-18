@@ -296,7 +296,7 @@ texture = ExtResource("4_bhhdu")
 
 [node name="Score" type="Label" parent="Camera2D/CanvasLayer/Control/Points"]
 self_modulate = Color(1, 1, 0, 1)
-layout_mode = 2
+layout_mode = 0
 offset_left = 1137.0
 offset_top = 614.0
 offset_right = 1256.0
@@ -350,7 +350,7 @@ theme_override_font_sizes/font_size = 101
 text = "GAME OVER"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/CanvasLayer/Control/GameOver"]
-layout_mode = 2
+layout_mode = 0
 offset_left = 620.0
 offset_top = 340.0
 offset_right = 621.0
@@ -365,6 +365,25 @@ theme_override_font_sizes/font_size = 36
 text = "USERNAME | SCORE | KILLS
 YOU | 1 | 1"
 horizontal_alignment = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="Camera2D/CanvasLayer/Control/GameOver"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -158.0
+offset_top = 165.0
+offset_right = 158.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RestartDeath" type="Button" parent="Camera2D/CanvasLayer/Control/GameOver/CenterContainer"]
+layout_mode = 2
+theme = ExtResource("5_1e7my")
+text = " RESTART "
 
 [node name="Powerups" type="Control" parent="Camera2D/CanvasLayer/Control"]
 layout_mode = 1
@@ -475,11 +494,17 @@ grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Camera2D/CanvasLayer/Pause/CenterContainer2"]
 layout_mode = 2
+theme_override_constants/separation = 39
 
 [node name="Quit" type="Button" parent="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer"]
 layout_mode = 2
 theme = ExtResource("5_1e7my")
 text = " QUIT "
+
+[node name="RestartPause" type="Button" parent="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("5_1e7my")
+text = " RESTART "
 
 [node name="PlayerSprite" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_kyqiw")
@@ -545,6 +570,8 @@ stream = ExtResource("18_ulo2v")
 [node name="pointTimer" type="Timer" parent="."]
 wait_time = 0.7
 
+[connection signal="pressed" from="Camera2D/CanvasLayer/Control/GameOver/CenterContainer/RestartDeath" to="." method="_on_restart_death_pressed"]
 [connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Camera2D/CanvasLayer/Pause/CenterContainer2/VBoxContainer/RestartPause" to="." method="_on_restart_pause_pressed"]
 [connection signal="timeout" from="RegenerateTimer" to="." method="_on_regenerate_timer_timeout"]
 [connection signal="timeout" from="pointTimer" to="." method="_on_point_timer_timeout"]

@@ -51,7 +51,7 @@ const attack_sounds: Array = [
 	preload("res://Assets/Enemies/ZombieSounds/attack4.mp3"),
 ]
 
-signal death(zombie_type: String)
+signal death(zombie_type: String, death_from: String, zm_position: Vector2, zombie_node: Node2D)
 
 var can_atk: bool = true
 var hitpoints: float = 4.0
@@ -134,10 +134,10 @@ func take_damage(dam: float, dam_type: String = "bullet") -> void:
 	hitpoints -= dam
 	if hitpoints <= 0:
 		is_dead = true
-		emit_signal("death", "basic", dam_type, global_position)
-		call_deferred("queue_free")
+		death.emit("basic", dam_type, global_position, self)
+		# Don't queue_free - let the pool handle it
 		return
-	player.add_points(10)
+	# No points for non-fatal hits - only for kills
 
 func _on_groan_timeout() -> void:
 	var rng = randi_range(0,4)
@@ -145,3 +145,62 @@ func _on_groan_timeout() -> void:
 		groan_sound.stream = groan_sounds[randi_range(0,6)]
 		groan_sound.play()
 	groan_timer.start()
+
+# Add to Zombie.gd
+
+# Reset zombie to initial pool state
+func reset_to_pool_state() -> void:
+	# Reset health
+	hitpoints = 4.0 * health_modifier
+	
+	# Reset movement state
+	velocity = Vector2.ZERO
+	
+	# Reset status effects
+	is_dead = false
+	stop_tracking = false
+	last_zombie = false
+	can_atk = true
+	
+	# Reset any timers
+	reset_internal_timers()
+	
+	# Reset visual state
+	modulate = Color.WHITE
+	scale = Vector2.ONE
+
+# Stop all zombie activity
+func stop_all_activity() -> void:
+	# Stop navigation updates
+	stop_tracking = true
+	
+	# Stop animations
+	if has_node("AnimationPlayer"):
+		$AnimationPlayer.stop()
+	
+	# Stop any audio
+	if groan_sound:
+		groan_sound.stop()
+	if sprint_sound:
+		sprint_sound.stop()
+	if attack_sound:
+		attack_sound.stop()
+
+# Reset internal timers and counters
+func reset_internal_timers() -> void:
+	# Reset timers
+	if atk_timer:
+		atk_timer.stop()
+	if groan_timer:
+		groan_timer.stop()
+	if sprint_timer:
+		sprint_timer.stop()
+	if attack_timer:
+		attack_timer.stop()
+
+# Modified death signal to include zombie reference
+func die() -> void:
+	# Emit death signal with zombie reference
+	death.emit("basic", "player", global_position, self)
+	
+	# Don't queue_free here anymore - let the pool handle it

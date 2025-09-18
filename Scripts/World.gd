@@ -78,16 +78,188 @@ var gun_to_spawn
 var instakill_active: bool = false
 var double_points_active: bool = false
 
+#Attempt to fix performance issues on web
+
+#Pooling of some sort, I dont exactly understand it
+var zombie_pool: Array[Node2D] = []
+var active_zombies: Array[Node2D] = []
+var pool_size: int = 30
+var zombie_pool_initialized: bool = false
+
 func _ready() -> void:
+	create_zombie_pool()
 	load_box_location()
 
-func _physics_process(_delta: float) -> void:
-	for e in fogs.get_children():
-		var noise_tex := e.texture as NoiseTexture2D
-		if noise_tex and noise_tex.noise:
-			var noise := noise_tex.noise as FastNoiseLite
-			
-			noise.offset += Vector3(.1,.1,0)
+func create_zombie_pool() -> void:
+	print("Creating zombie pool with ", pool_size, " zombies...")
+	
+	for i in pool_size:
+		var zombie = zombie_scene.instantiate()
+		zombie.name = "PooledZombie" + str(i)
+		
+		# Set initial inactive state
+		zombie.visible = false
+		zombie.set_physics_process(false)
+		zombie.set_process(false)
+		
+		# Disable Area2D monitoring if zombie has one
+		var area_node = zombie.get_node_or_null("Area2D")
+		if area_node and area_node is Area2D:
+			area_node.monitoring = false
+		
+		# Connect death signal to pool return function
+		zombie.connect("death", _on_zombie_returned_to_pool)
+		
+		# Add to scene but keep inactive
+		zombies.add_child(zombie)
+		zombie_pool.append(zombie)
+	
+	zombie_pool_initialized = true
+	print("Zombie pool created successfully!")
+
+# Get zombie from pool with full setup
+func get_zombie_from_pool(spawn_position: Vector2) -> Node2D:
+	var zombie: Node2D
+	
+	if zombie_pool.is_empty():
+		# Fallback: create new zombie if pool is exhausted
+		print("Warning: Zombie pool exhausted, creating new zombie")
+		zombie = zombie_scene.instantiate()
+		zombie.name = "EmergencyZombie" + str(zombie_index)
+		zombie_index += 1
+		zombie.connect("death", _on_zombie_returned_to_pool)
+		zombies.add_child(zombie)
+	else:
+		# Get zombie from pool
+		zombie = zombie_pool.pop_back()
+		active_zombies.append(zombie)
+	
+	# Activate and setup zombie
+	activate_zombie(zombie, spawn_position)
+	return zombie
+
+# Activate zombie with all necessary setup
+func activate_zombie(zombie: Node2D, spawn_position: Vector2) -> void:
+	# Reset position and state
+	zombie.global_position = spawn_position
+	
+	# Set health and modifiers
+	zombie.health_modifier = zombie_health_modifier
+	# Recalculate hitpoints with new modifier
+	zombie.hitpoints = 4.0 * zombie_health_modifier
+	
+	# Apply current powerup effects
+	if instakill_active:
+		zombie.activate_instakill()
+	
+	# Handle late round speed boost
+	if zombies_alive <= 3 and wave >= 4:
+		zombie.last_zombies()
+	
+	# Activate zombie systems
+	zombie.visible = true
+	zombie.set_physics_process(true)
+	zombie.set_process(true)
+	
+	# Re-enable Area2D monitoring if zombie has one
+	var area_node = zombie.get_node_or_null("Area2D")
+	if area_node and area_node is Area2D:
+		area_node.monitoring = true
+	
+	# Reset zombie to initial state (you'll need this method in Zombie.gd)
+	zombie.reset_to_pool_state()
+
+# Return zombie to pool
+func return_zombie_to_pool(zombie: Node2D) -> void:
+	if not zombie:
+		return
+	
+	# Remove from active list
+	if zombie in active_zombies:
+		active_zombies.erase(zombie)
+	
+	# Deactivate zombie
+	deactivate_zombie(zombie)
+	
+	# Return to pool if there's space
+	if zombie_pool.size() < pool_size:
+		zombie_pool.append(zombie)
+	else:
+		# Pool is full, destroy excess zombie
+		zombie.queue_free()
+
+# Deactivate zombie completely
+func deactivate_zombie(zombie: Node2D) -> void:
+	# Stop all processes
+	zombie.set_physics_process(false)
+	zombie.set_process(false)
+	zombie.visible = false
+	
+	# Disable Area2D monitoring if zombie has one
+	var area_node = zombie.get_node_or_null("Area2D")
+	if area_node and area_node is Area2D:
+		area_node.monitoring = false
+	
+	# Reset zombie state
+	zombie.reset_to_pool_state()
+	
+	# Stop any ongoing animations or sounds
+	zombie.stop_all_activity()
+
+# Signal handler for zombie death
+func _on_zombie_returned_to_pool(zombie_type: String, death_from: String, zm_position: Vector2, zombie_node: Node2D) -> void:
+	# Handle scoring and powerup spawning first
+	handle_zombie_death_effects(zombie_type, death_from, zm_position)
+	
+	# Return zombie to pool
+	return_zombie_to_pool(zombie_node)
+	
+	# Update counters
+	zombies_alive -= 1
+	player.update_zombie_counter(zombies_alive)
+	
+	# Handle last zombie speed boost
+	if zombies_alive <= 3 and wave >= 4:
+		for zombie in active_zombies:
+			if zombie and zombie.visible:
+				zombie.sprint()
+	
+	# Check for round end
+	if zombies_alive <= 0 and zombies_to_spawn <= 0:
+		new_round()
+
+# Separate function to handle death effects (points, powerups, etc.)
+func handle_zombie_death_effects(zombie_type: String, death_from: String, zm_position: Vector2) -> void:
+	player.increment_kills()
+	
+	var multi = 1
+	if double_points_active:
+		multi = 2
+	
+	match zombie_type:
+		"basic":
+			if death_from == "bullet":
+				player.add_points(80 * multi)
+			elif death_from == "knife":
+				player.add_points(130 * multi)
+			else:
+				player.add_points(80 * multi)  # Default to bullet points
+	
+	# Powerup spawn chance
+	var powerup_rng = randi_range(1, 40)
+	if powerup_rng == 40:
+		spawn_powerup(zm_position)
+
+# Utility function to clean up pool on game over
+func cleanup_zombie_pool() -> void:
+	# Return all active zombies to pool
+	for zombie in active_zombies.duplicate():
+		return_zombie_to_pool(zombie)
+	
+	# Stop all zombie activity
+	for zombie in zombie_pool:
+		if zombie:
+			deactivate_zombie(zombie)
 
 func load_box_location() -> void:
 	var new_location = randi_range(0,3)
@@ -122,8 +294,9 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			await get_tree().create_timer(2.95).timeout
 			max_ammo.call_deferred("queue_free")
 		"instakill":
-			for e in zombies.get_children():
-				e.activate_instakill()
+			for zombie in active_zombies:
+				if zombie and zombie.visible:
+					zombie.activate_instakill()
 			instakill_active = true
 			var instakill: AudioStreamPlayer = AudioStreamPlayer.new()
 			instakill.stream = INSTAKILL
@@ -153,8 +326,9 @@ func collect_powerup(body: Node2D, powerup: String, powerup_node: Sprite2D) -> v
 			powerup_node.call_deferred("queue_free")
 			await get_tree().create_timer(2.71).timeout
 			kaboom.call_deferred("queue_free")
-			for e in zombies.get_children():
-				e.take_damage(9999999999999.0)
+			for zombie in active_zombies:
+				if zombie and zombie.visible:
+					zombie.take_damage(9999999999999.0)
 			await get_tree().create_timer(3).timeout
 			player.add_points(400)
 
@@ -239,10 +413,13 @@ func zombie_death(zombie_type: String, death_from: String, zm_position: Vector2)
 
 	# Last zombies get faster
 	if zombies_alive <= 3 and wave >= 4:
-		var children = zombies.get_children()
-		children[0].sprint()
-		for e in children:
-			e.last_zombies()
+		if active_zombies.size() > 0:
+			var first_zombie = active_zombies[0]
+			if first_zombie and first_zombie.visible:
+				first_zombie.sprint()
+		for zombie in active_zombies:
+			if zombie and zombie.visible:
+				zombie.last_zombies()
 
 	# Wave over
 	if zombies_alive <= 0 and zombies_to_spawn <= 0:
@@ -309,29 +486,26 @@ func _on_spawner_timeout() -> void:
 	zombies_to_spawn -= 1
 	zombies_alive += 1
 
+	# Get spawn location
 	var spawns: int = len(zombie_spawns[in_location]) - 1
 	var spawn_index: int = randi_range(0, spawns)
-
-	var zombie = zombie_scene.instantiate()
-	zombie.health_modifier = zombie_health_modifier
-	zombie.name = "Zombie" + str(zombie_index)
-	zombie_index += 1
-	if instakill_active:
-		zombie.activate_instakill()
-	zombies.call_deferred("add_child", zombie)
-	zombie.position = zombie_spawns[in_location][spawn_index].position
-	zombie.connect("death", zombie_death)
-
-	if zombies_alive <= 3 and wave >= 4:
-		zombie.last_zombies()
-
+	var spawn_position = zombie_spawns[in_location][spawn_index].global_position
+	
+	# Get zombie from pool instead of instantiating
+	var zombie = get_zombie_from_pool(spawn_position)
+	
 	player.update_zombie_counter(zombies_alive)
 	spawner.start()
 
 func game_over() -> void:
 	game_over_sound.play()
-	for e in zombies.get_children():
-		e.stop_tracking = true
+	
+	# Use pooled zombies instead of getting all children
+	for zombie in active_zombies:
+		if zombie:
+			zombie.stop_tracking = true
+	
+	cleanup_zombie_pool()
 	player.death()
 	spawner.stop()
 
@@ -497,8 +671,62 @@ func _zombie_spawn_area4(body: Node2D) -> void:
 
 func _on_instakill_timeout() -> void:
 	instakill_active = false
-	for e in zombies.get_children():
-		e.deactivate_instakill()
+	for zombie in active_zombies:
+		if zombie and zombie.visible:
+			zombie.deactivate_instakill()
 
 func _on_double_points_timeout() -> void:
 	double_points_active = false
+
+# Add these advanced pool management functions to World.gd
+
+# Dynamically resize pool based on performance
+func adjust_pool_size(new_size: int) -> void:
+	if new_size < pool_size:
+		# Shrink pool
+		var excess = pool_size - new_size
+		for i in excess:
+			if not zombie_pool.is_empty():
+				var zombie = zombie_pool.pop_back()
+				zombie.queue_free()
+	elif new_size > pool_size:
+		# Grow pool
+		var additional = new_size - pool_size
+		for i in additional:
+			var zombie = zombie_scene.instantiate()
+			zombie.name = "PooledZombie" + str(pool_size + i)
+			zombie.visible = false
+			zombie.set_physics_process(false)
+			zombie.connect("death", _on_zombie_returned_to_pool)
+			zombies.add_child(zombie)
+			zombie_pool.append(zombie)
+	
+	pool_size = new_size
+
+# Preload zombies with specific configurations
+# Preload zombies with specific configurations
+func preload_zombie_configurations() -> void:
+	# Zombies are configured when activated, so this function
+	# can be used for other pre-loading tasks if needed
+	pass
+
+# Performance monitoring
+func monitor_pool_performance() -> void:
+	var status = get_pool_status()
+	
+	# Adjust pool size based on usage
+	if status.active_zombies > status.pool_size * 0.8:
+		# Pool is nearly exhausted, increase size
+		adjust_pool_size(pool_size + 5)
+	elif status.active_zombies < status.pool_size * 0.3 and pool_size > 15:
+		# Pool is underutilized, decrease size
+		adjust_pool_size(pool_size - 5)
+
+# Debug function to monitor pool status
+func get_pool_status() -> Dictionary:
+	return {
+		"pool_size": zombie_pool.size(),
+		"active_zombies": active_zombies.size(),
+		"total_zombie_children": zombies.get_child_count(),
+		"zombies_alive": zombies_alive
+	}

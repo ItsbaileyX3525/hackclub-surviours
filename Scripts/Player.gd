@@ -631,7 +631,7 @@ func _physics_process(delta: float) -> void:
 		knife_sprite.visible = true
 		knife_anim.play("slash")
 		for e in knife_area.get_overlapping_bodies():
-			if e.name.begins_with("Zombie"):
+			if e.has_method("take_damage"):
 				e.take_damage(10, "knife")
 				break #Only one zombie 
 		await knife_anim.animation_finished
@@ -679,12 +679,12 @@ func _physics_process(delta: float) -> void:
 		
 	if Input.is_action_just_pressed("cheat"):
 		return
-		points += 1000
-		add_weapon_to_inventory("ak47")
+		#points += 1000
+		#add_weapon_to_inventory("ak47")
 
 	if Input.is_action_just_pressed("cheat2"):
 		return
-		remove_weapon()
+		#remove_weapon()
 
 func take_hit(damange: int) -> void:
 	health -= damange
@@ -762,3 +762,9 @@ func _on_quit_pressed() -> void:
 
 func _on_point_timer_timeout() -> void:
 	add_points_label.visible = false
+
+func _on_restart_death_pressed() -> void:
+	get_tree().change_scene_to_file("res://Scenes/Levels/Main.tscn")
+
+func _on_restart_pause_pressed() -> void:
+	get_tree().change_scene_to_file("res://Scenes/Levels/Main.tscn")
